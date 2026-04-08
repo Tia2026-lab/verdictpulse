@@ -1,0 +1,1926 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VerdictPulse · 判决书管理系统</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --primary: #7c6fa0;
+    --primary-dark: #5a5078;
+    --primary-mid: #9585b8;
+    --primary-light: #f0edf7;
+    --accent: #7c6fa0;
+    --accent-light: #f0edf7;
+    --bg: #f5f3ef;
+    --surface: #ffffff;
+    --surface-alt: #faf9f7;
+    --border: #e8e4de;
+    --border-strong: #d5cfc6;
+    --text: #1a1a1a;
+    --text-muted: #7a7570;
+    --text-light: #b0a89e;
+    --win1: #1a6b3c;
+    --win1-bg: #e6f4ec;
+    --win2: #1a4d8f;
+    --win2-bg: #e8f0fb;
+    --winRetry: #334155;
+    --winRetry-bg: #f1f5f9;
+    --lose: #7f1d1d;
+    --lose-bg: #fdeaea;
+    --procedural: #7a7570;
+    --procedural-bg: #f0ede8;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04);
+    --shadow-lg: 0 12px 28px rgba(0,0,0,0.10), 0 4px 8px rgba(0,0,0,0.06);
+  }
+  body {
+    font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  /* Header */
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px 0;
+    box-shadow: var(--shadow);
+  }
+  .header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .header-title h1 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .header-title p {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 2px;
+    letter-spacing: 0.3px;
+    margin-left: 48px;
+  }
+  .logo-icon {
+    width: 36px; height: 36px;
+    background: #1a1a1a;
+    border-radius: 10px;
+    display: inline-flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    vertical-align: middle;
+  }
+  .global-search {
+    display: flex;
+    align-items: center;
+    background: var(--surface-alt);
+    border: 1px solid var(--border-strong);
+    border-radius: 9px;
+    padding: 8px 14px;
+    gap: 8px;
+    min-width: 360px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .global-search:focus-within {
+    border-color: #a09080;
+    background: white;
+    box-shadow: 0 0 0 2px var(--primary-light);
+  }
+  .global-search input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-size: 15px;
+    width: 100%;
+  }
+  .global-search input::placeholder { color: var(--text-light); }
+  .global-search svg { color: var(--text-light); flex-shrink: 0; }
+
+  /* Stats cards */
+  .stats-bar {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding-bottom: 16px;
+  }
+  .stat-card {
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 6px 14px;
+    min-width: 64px;
+    text-align: center;
+    cursor: default;
+    transition: background 0.2s, transform 0.2s;
+  }
+  .stat-card:hover { background: white; transform: translateY(-1px); box-shadow: var(--shadow); }
+  .stat-card .num {
+    font-size: 21px;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--text);
+    letter-spacing: -0.5px;
+  }
+  .stat-card .label {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 1px;
+    white-space: nowrap;
+  }
+  .stat-card.highlight .num { color: #111827; }
+  .stat-card.stat-total { border-bottom: 2px solid #374151 !important; }
+  .stat-card.stat-win { border-bottom: 2px solid #166534 !important; }
+  .stat-card.stat-win .num { color: var(--win1); }
+  .stat-card.stat-lose { border-bottom: 2px solid #991b1b !important; }
+  .stat-card.stat-lose .num { color: var(--lose); }
+  .stat-card.stat-proc { border-bottom: 2px solid var(--border-strong) !important; }
+
+  /* Nav tabs */
+  .nav-tabs {
+    display: flex;
+    gap: 8px;
+    padding: 0 0 0 0;
+  }
+  .nav-tab {
+    padding: 10px 20px;
+    border-radius: 8px 8px 0 0;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-muted);
+    border: 1px solid transparent;
+    border-bottom: none;
+    background: transparent;
+    transition: all 0.2s;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    position: relative;
+    letter-spacing: 0.2px;
+  }
+  .nav-tab:hover { background: var(--surface-alt); color: var(--text); }
+  .nav-tab.active {
+    background: var(--surface);
+    color: var(--text);
+    font-weight: 700;
+    border-bottom: 3px solid var(--primary);
+  }
+  .nav-tab .badge {
+    background: rgba(255,255,255,0.15);
+    border-radius: 999px;
+    padding: 1px 7px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .nav-tab.active .badge {
+    background: var(--accent-light);
+    color: var(--accent);
+  }
+
+  /* Main content */
+  .layout { display: flex; gap: 20px; max-width: 1500px; margin: 0 auto; align-items: flex-start; padding: 20px 24px; }
+  .sidebar {
+    width: 188px; min-width: 188px; max-width: 188px;
+    flex-shrink: 0;
+    position: sticky; top: 20px; max-height: calc(100vh - 40px); overflow-y: auto; overflow-x: hidden;
+  }
+  .sidebar-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 0 8px 0;
+    font-size: 13px; font-weight: 600; color: var(--text-muted);
+    border-bottom: 1px solid var(--border-strong);
+    margin-bottom: 4px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .filter-section { margin-bottom: 2px; }
+  .filter-section-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 0 6px 0;
+    cursor: pointer; user-select: none;
+    font-size: 13px; font-weight: 600; color: var(--text);
+    border-bottom: 1px solid var(--border);
+    gap: 6px;
+  }
+  .filter-section-header .fsh-title { display:flex; align-items:center; gap:6px; }
+  .filter-section-header:hover { color: var(--primary); }
+  .filter-section-chevron {
+    font-size: 10px; color: var(--text-muted);
+    transition: transform 0.2s;
+  }
+  .filter-section-chevron.collapsed { transform: rotate(-90deg); }
+  .filter-section-body { padding: 2px 0 4px 0; }
+  .filter-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 6px 4px 6px 8px;
+    font-size: 13px; color: var(--text);
+    cursor: pointer; transition: background 0.1s;
+    border-radius: 5px;
+    gap: 4px;
+  }
+  .filter-item:hover { background: var(--surface-alt); }
+  .filter-item.active { background: var(--surface); color: var(--text); font-weight: 700; border-left: 3px solid var(--primary); padding-left: 5px; }
+  .filter-item .fi-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .filter-item .fi-cnt { color: var(--text-light); font-size: 11px; flex-shrink: 0; }
+  .filter-item.active .fi-cnt { color: var(--text-muted); }
+  .filter-court-region { padding: 6px 0 2px 8px; font-size: 10px; font-weight: 600; color: var(--text-light); letter-spacing: 0.05em; }
+  .main { padding: 20px 0; flex: 1; min-width: 0; }
+
+  /* Global search results banner */
+  .search-banner {
+    background: var(--primary-light);
+    border: 1px solid #bfd4f5;
+    border-radius: 8px;
+    padding: 10px 16px;
+    margin-bottom: 16px;
+    display: none;
+    align-items: center;
+    gap: 8px;
+    color: var(--primary-dark);
+    font-size: 13px;
+  }
+  .search-banner.visible { display: flex; }
+  .search-banner button {
+    margin-left: auto;
+    background: none;
+    border: 1px solid var(--primary);
+    color: var(--primary);
+    border-radius: 5px;
+    padding: 3px 10px;
+    cursor: pointer;
+    font-size: 12px;
+  }
+
+  /* Judge stats panel */
+  /* judge-panel merged into sidebar */
+  .judge-region {
+    margin-bottom: 12px;
+  }
+  .judge-region-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 2px 4px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid var(--border);
+  }
+  .judge-court-group {
+    margin-bottom: 6px;
+  }
+  .judge-court-label {
+    font-size: 10px;
+    color: #9ca3af;
+    padding: 1px 4px;
+    margin-bottom: 2px;
+  }
+  .judge-chips-row {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .judge-chip {
+    background: #f3f4f6;
+    color: #374151;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 13px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .judge-chip.active-judge { background: #e0e7ff; border-color: #818cf8; color: #3730a3; }
+  .judge-chip:hover { background: #e5e7eb; border-color: #9ca3af; color: #111827; }
+  .judge-chip .cnt {
+    background: #6b7280;
+    color: white;
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  /* Tab content panel */
+  .tab-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 0 10px 10px 10px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    display: none;
+  }
+  .tab-panel.active { display: block; }
+
+  /* Table toolbar */
+  .table-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-alt);
+    flex-wrap: wrap;
+  }
+  .table-search {
+    display: flex;
+    align-items: center;
+    background: white;
+    border: 1px solid var(--border-strong);
+    border-radius: 6px;
+    padding: 6px 12px;
+    gap: 6px;
+    flex: 1;
+    min-width: 180px;
+    max-width: 340px;
+  }
+  .table-search input {
+    border: none;
+    outline: none;
+    font-size: 13px;
+    width: 100%;
+    color: var(--text);
+  }
+  .table-search svg { color: var(--text-muted); flex-shrink: 0; }
+  .table-search:focus-within { border-color: var(--primary-mid); box-shadow: 0 0 0 2px var(--primary-light); }
+  .table-info {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-left: auto;
+    white-space: nowrap;
+  }
+
+  /* Table */
+  .table-wrap { overflow-x: auto; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  thead th {
+    background: var(--surface-alt);
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    padding: 11px 14px;
+    text-align: left;
+    border-bottom: 2px solid var(--border-strong);
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+  thead th:hover { background: var(--primary-light); color: var(--primary); }
+  thead th .sort-icon { display: inline-block; margin-left: 4px; opacity: 0.4; font-size: 10px; }
+  thead th.sorted-asc .sort-icon::after { content: '▲'; opacity: 1; color: var(--primary); }
+  thead th.sorted-desc .sort-icon::after { content: '▼'; opacity: 1; color: var(--primary); }
+  thead th:not(.sorted-asc):not(.sorted-desc) .sort-icon::after { content: '⇅'; }
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.12s;
+  }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:nth-child(even):not(.group-header) { background: #fafbfc; }
+  tbody tr:hover:not(.group-header) { background: var(--primary-light); }
+  tbody td {
+    padding: 10px 12px;
+    vertical-align: middle;
+    max-width: 200px;
+  }
+  tbody td.date { white-space: nowrap; color: var(--text-muted); font-size: 13px; }
+  tbody td.plaintiff { font-weight: 600; color: var(--text); white-space: nowrap; max-width: 150px; overflow: hidden; text-overflow: ellipsis; }
+  tbody td.case-no { font-family: monospace; font-size: 13px; color: var(--text-muted); white-space: nowrap; }
+  tbody td.court { color: var(--text-muted); font-size: 13px; white-space: nowrap; max-width: 160px; overflow: hidden; text-overflow: ellipsis; }
+  tbody td.judge { white-space: nowrap; max-width: 140px; overflow: hidden; text-overflow: ellipsis; }
+  tbody td.claim { white-space: nowrap; font-size: 13px; }
+  tbody td.keywords { color: var(--text-muted); font-size: 13px; max-width: 180px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* Result badge */
+  .badge-result {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+    letter-spacing: 0.4px;
+    border: 1px solid transparent;
+  }
+  .badge-result.win1 { background: var(--win1-bg); color: var(--win1); border-color: #b7e4c7; }
+  .badge-result.win2 { background: var(--win2-bg); color: var(--win2); border-color: #bfd4f5; }
+  .badge-result.winRetry { background: var(--winRetry-bg); color: var(--winRetry); border-color: #cbd5e1; }
+  .badge-result.lose { background: var(--lose-bg); color: var(--lose); border-color: #f5b8b8; }
+  .badge-result.lose1 { background: var(--lose-bg); color: var(--lose); border-color: #f5b8b8; }
+  .badge-result.procedural { background: var(--procedural-bg); color: var(--procedural); border-color: #d1d5db; }
+
+  /* Keyword tags */
+  .kw-tag {
+    display: inline-block;
+    background: #f1f5f9;
+    color: var(--text-muted);
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-size: 11px;
+    margin: 1px 2px;
+    border: 1px solid var(--border);
+  }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--text-muted);
+  }
+  .empty-state svg { margin-bottom: 12px; opacity: 0.3; }
+  .empty-state p { font-size: 14px; }
+
+  /* Modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    backdrop-filter: blur(2px);
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid var(--border-strong);
+    box-shadow: var(--shadow-lg);
+    max-width: 700px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: modalIn 0.2s ease;
+  }
+  @keyframes modalIn {
+    from { transform: translateY(20px) scale(0.97); opacity: 0; }
+    to { transform: none; opacity: 1; }
+  }
+  .modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 20px 24px 16px 20px;
+    padding-left: 20px;
+    border-bottom: 1px solid var(--border);
+    gap: 16px;
+    border-left: 4px solid var(--primary);
+    border-radius: 12px 12px 0 0;
+  }
+  .modal-header h2 { font-size: 17px; font-weight: 700; color: var(--text); line-height: 1.4; }
+  .modal-header .sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+  .modal-close {
+    background: #f1f5f9;
+    border: none;
+    border-radius: 999px;
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 32px;
+    text-align: center;
+    color: var(--text-muted);
+    flex-shrink: 0;
+    transition: background 0.15s;
+  }
+  .modal-close:hover { background: #e2e8f0; color: var(--text); }
+  .modal-body { padding: 20px 24px; }
+  .modal-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  @media (max-width: 768px) {
+    .modal-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 480px) {
+    .modal-grid { grid-template-columns: 1fr; }
+  }
+  .modal-field { }
+  .modal-field.full-width {
+    grid-column: 1 / -1;
+  }
+  .modal-field .field-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-light);
+    margin-bottom: 4px;
+  }
+  .modal-field .field-value {
+    font-size: 14px;
+    color: var(--text);
+    font-weight: 500;
+  }
+  .modal-section-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+    margin-bottom: 12px;
+  }
+  .modal-reasoning {
+    background: #eff6ff;
+    border-radius: 8px;
+    padding: 14px 16px;
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text);
+    border-left: 3px solid var(--primary);
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .header { padding: 16px 16px 0; }
+    .main { padding: 14px 0; }
+    .sidebar { display: none; }
+    .layout { padding: 14px 16px; gap: 0; }
+    .global-search { min-width: 200px; }
+    .stat-card { min-width: 70px; padding: 8px 12px; }
+    .stat-card .num { font-size: 18px; }
+    .nav-tab { padding: 8px 12px; font-size: 13px; }
+    .header-title h1 { font-size: 16px; }
+    tbody td { padding: 8px; }
+    .modal-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 480px) {
+    .nav-tab .tab-label { display: none; }
+    .nav-tab { padding: 8px 10px; }
+    .modal-grid { grid-template-columns: 1fr; }
+  }
+
+  .chevron { transition: transform 0.2s; display: inline-block; }
+  .chevron.open { transform: rotate(180deg); }
+
+  /* Highlighted search match */
+  mark { background: #fef08a; color: inherit; border-radius: 2px; }
+
+  /* Subcat group header */
+  tr.group-header td {
+    background: var(--surface-alt);
+    border-bottom: 1px solid var(--border);
+    border-left: 3px solid var(--primary);
+    padding: 10px 16px;
+    cursor: pointer;
+    user-select: none;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    color: var(--text);
+    transition: background 0.15s;
+  }
+  tr.group-header:hover td { background: var(--accent-light); }
+  tr.group-header .group-arrow {
+    font-size: 11px;
+    color: var(--text-muted);
+    transition: transform 0.2s;
+    display: inline-block;
+    width: 14px;
+    text-align: center;
+    margin-right: 4px;
+  }
+  tr.group-header.collapsed .group-arrow { transform: rotate(-90deg); }
+  tr.group-header .group-count {
+    font-size: 12px;
+    font-weight: 700;
+    background: var(--primary-light);
+    color: var(--primary);
+    border-radius: 999px;
+    padding: 1px 8px;
+    margin-left: 6px;
+  }
+
+  /* Judge profile card */
+  .judge-profile-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4); z-index: 2000;
+    align-items: center; justify-content: center;
+    padding: 20px; backdrop-filter: blur(2px);
+  }
+  .judge-profile-overlay.open { display: flex; }
+  .judge-profile-card {
+    background: white; border-radius: 12px;
+    border: 1px solid var(--border-strong);
+    box-shadow: var(--shadow-lg);
+    max-width: 480px; width: 100%;
+    animation: modalIn 0.2s ease;
+  }
+  .judge-profile-header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    padding: 20px 24px 16px 20px;
+    border-bottom: 1px solid var(--border);
+    border-left: 4px solid var(--primary);
+    border-radius: 12px 12px 0 0;
+    gap: 16px;
+  }
+  .judge-profile-header .name { font-size: 17px; font-weight: 700; color: var(--text); line-height: 1.4; }
+  .judge-profile-header .court-label { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+  .judge-profile-body { padding: 20px 24px; }
+  .judge-profile-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 12px 20px; margin-bottom: 20px;
+  }
+  .judge-profile-field .jp-label {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.8px; color: var(--text-light); margin-bottom: 4px;
+  }
+  .judge-profile-field .jp-value {
+    font-size: 14px; color: var(--text); font-weight: 500;
+  }
+  .judge-profile-notes-title {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.6px; color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px; margin-bottom: 12px;
+  }
+  .judge-profile-notes {
+    background: #eff6ff; border-left: 3px solid var(--primary);
+    border-radius: 8px; padding: 14px 16px;
+    font-size: 14px; line-height: 1.7; color: var(--text);
+  }
+  /* 档案图标 */
+  .fi-label { display: flex; align-items: center; gap: 5px; }
+  .judge-profile-icon {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 15px; height: 15px; flex-shrink: 0;
+    background: var(--primary-light); color: var(--primary);
+    border-radius: 50%; font-size: 9px; font-weight: 700;
+    cursor: pointer;
+    border: 1px solid var(--primary-mid);
+    transition: background 0.15s;
+    line-height: 1;
+  }
+  .judge-profile-icon:hover { background: var(--primary); color: white; }
+
+  /* PDF button in modal */
+  .modal-footer {
+    padding: 12px 24px 20px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+  }
+  .btn-pdf {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: background 0.15s, opacity 0.15s;
+  }
+  .btn-pdf.available {
+    background: #1a1a1a;
+    color: white;
+  }
+  .btn-pdf.available:hover { background: #333; }
+  .btn-pdf.disabled {
+    background: #e2e8f0;
+    color: #94a3b8;
+    cursor: not-allowed;
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-top">
+    <div class="header-title">
+      <h1>
+        <div class="logo-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3v18"/>
+            <path d="M3 6l9-3 9 3"/>
+            <path d="M6 6l-3 7c0 1.66 1.34 3 3 3s3-1.34 3-3L6 6z"/>
+            <path d="M18 6l-3 7c0 1.66 1.34 3 3 3s3-1.34 3-3L18 6z"/>
+            <path d="M8 21h8"/>
+          </svg>
+        </div>
+        VerdictPulse
+      </h1>
+      <p>结案文书管理系统</p>
+    </div>
+    <div class="global-search">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" id="globalSearch" placeholder="全局搜索：原告、案号、法官、关键词…">
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-bar" id="statsBar"></div>
+
+  <!-- Nav tabs -->
+  <div class="nav-tabs" id="navTabs"></div>
+</div>
+
+<!-- LAYOUT -->
+<div class="layout">
+  <!-- Sidebar -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <span>过滤条件</span>
+      <span id="clearAllFilters" onclick="clearAllFilters()" style="cursor:pointer;font-weight:500;display:none;text-transform:none;letter-spacing:0;">清除</span>
+    </div>
+    <div id="sidebarBody"></div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <!-- Search banner -->
+    <div class="search-banner" id="searchBanner">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <span id="searchBannerText"></span>
+      <button onclick="clearGlobalSearch()">清除搜索</button>
+    </div>
+
+    <!-- Tab panels -->
+    <div id="tabPanels"></div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="handleOverlayClick(event)">
+  <div class="modal" id="modal">
+    <div class="modal-header">
+      <div>
+        <h2 id="modalTitle"></h2>
+        <div class="sub" id="modalSub"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-grid" id="modalGrid"></div>
+      <div class="modal-section-title">裁判说理</div>
+      <div class="modal-reasoning" id="modalReasoning"></div>
+    </div>
+    <div class="modal-footer">
+      <button id="modalPdfBtn" class="btn-pdf disabled" disabled title="PDF 文件暂未上传">📄 查看原始判决书</button>
+    </div>
+  </div>
+</div>
+
+<!-- Judge Profile Overlay -->
+<div class="judge-profile-overlay" id="judgeProfileOverlay" onclick="closeJudgeProfile(event)">
+  <div class="judge-profile-card" onclick="event.stopPropagation()">
+    <div class="judge-profile-header">
+      <div>
+        <div class="name" id="jpName"></div>
+        <div class="court-label" id="jpCourt"></div>
+      </div>
+      <button class="modal-close" onclick="closeJudgeProfile()">✕</button>
+    </div>
+    <div class="judge-profile-body">
+      <div class="judge-profile-grid">
+        <div class="judge-profile-field" style="grid-column:1/3">
+          <div class="jp-label">所在庭室</div>
+          <div class="jp-value" id="jpChamber"></div>
+        </div>
+        <div class="judge-profile-field">
+          <div class="jp-label">法官联系方式</div>
+          <div class="jp-value" id="jpContact"></div>
+        </div>
+        <div class="judge-profile-field">
+          <div class="jp-label">法官助理</div>
+          <div class="jp-value" id="jpAssistant"></div>
+        </div>
+        <div class="judge-profile-field">
+          <div class="jp-label">助理联系方式</div>
+          <div class="jp-value" id="jpAssistantContact"></div>
+        </div>
+        <div class="judge-profile-field">
+          <div class="jp-label">书记员</div>
+          <div class="jp-value" id="jpClerk"></div>
+        </div>
+        <div class="judge-profile-field">
+          <div class="jp-label">书记员联系方式</div>
+          <div class="jp-value" id="jpClerkContact"></div>
+        </div>
+      </div>
+      <div class="judge-profile-notes-title">工作要求与特点</div>
+      <div class="judge-profile-notes" id="jpNotes"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// DATA
+// ============================================================
+// ============================================================
+// 法官档案
+// ============================================================
+const JUDGE_PROFILES = {
+  '汤峥鸣': {
+    court: '上海市黄浦区人民法院',
+    chamber: '速裁庭（小组长）',
+    contact: '53584777-19051',
+    assistant: '孙佳杰',
+    assistantContact: '—',
+    clerk: '赵夏君',
+    clerkContact: '53584777-19053',
+    notes: '汤法官（青年）负责主审案件、非常了解公司情况、处理案件量较大、晚间仍在加班，一般会集中一天全天审理平台案件，会根据公司反馈和应诉情况帮公司和原告提前沟通撤诉，无额外要求，但请避免让汤法官二次开庭。',
+  },
+  '孙韵清': {
+    court: '上海市黄浦区人民法院',
+    chamber: '速裁庭',
+    contact: '53584777-20091',
+    assistant: '邹招法',
+    assistantContact: '53584777-20093',
+    clerk: '崔煜',
+    clerkContact: '53584777-20083',
+    notes: '一般由邹法官（青年）组织庭审和庭前沟通，对公司了解情况，会认真看公司应诉材料，无额外要求；正式开庭由孙韵清法官组织，开庭建议提供书面材料供孙法官查阅。',
+  },
+  '舒海卫': {
+    court: '上海市黄浦区人民法院',
+    chamber: '速裁庭（资深法官）',
+    contact: '53584777-20141',
+    assistant: '许梦瑶',
+    assistantContact: '53584777-20142',
+    clerk: '孙晓萍/孙泓云',
+    clerkContact: '53584777-20143',
+    notes: '舒法官为资深法官，非常有耐心、案件审理逻辑严密；建议公司应诉时提前了解案件中的商业模式、应对庭审询问，开庭建议提供书面材料供舒法官查阅。如涉及劝原告撤诉事项，请与法官助理许梦瑶联系，许法官很热心，会认真倾听公司意见。',
+  },
+  '吴建波': {
+    court: '上海市黄浦区人民法院',
+    chamber: '民事审判庭（资深法官）',
+    contact: '53584777-21012',
+    assistant: '黄慧芳',
+    assistantContact: '53584777-21013',
+    clerk: '李海丽',
+    clerkContact: '—',
+    notes: '吴法官为资深法官，庭审节奏需按照吴法官要求进行，正式庭审前沟通事项较多、正式开庭流程很快、会帮平台劝原告对平台撤诉，开庭建议提供书面材料供吴法官查阅。吴法官大局观很强、会和市监局等单位经常沟通交流。',
+  },
+  '周红林': {
+    court: '上海市黄浦区人民法院',
+    chamber: '民事审判庭（资深法官）',
+    contact: '53584777-21151',
+    assistant: '关蓓华',
+    assistantContact: '53584777-21152',
+    clerk: '张佳仪',
+    clerkContact: '—',
+    notes: '周法官为资深法官，庭审节奏很快，请提前了解案件事实、提前提供证据和答辩，开庭建议提供书面材料供周法官查阅，周法官很讨厌二次开庭。',
+  },
+  '郭宏': {
+    court: '上海市黄浦区人民法院',
+    chamber: '民事审判庭',
+    contact: '53584777-20081',
+    assistant: '施晓莉',
+    assistantContact: '—',
+    clerk: '马璐',
+    clerkContact: '—',
+    notes: '郭法官了解公司商业模式，具体案件判决文书由法官助理施晓莉经办较多，法官会根据公司提交材料和原告提前沟通撤诉。',
+  },
+  '蒋春': {
+    court: '上海市黄浦区人民法院',
+    chamber: '民事审判庭',
+    contact: '53584777-19011',
+    assistant: '邵莉玲',
+    assistantContact: '53584777-19012',
+    clerk: '王月昇',
+    clerkContact: '53584777-19013',
+    notes: '—',
+  },
+  '于家傲': {
+    court: '上海市黄浦区人民法院',
+    chamber: '民事审判庭（青年法官）',
+    contact: '53584777-18151',
+    assistant: '石韶玮',
+    assistantContact: '53584777-18152',
+    clerk: '—',
+    clerkContact: '—',
+    notes: '于法官（青年）了解公司商业模式，审理案件谨慎细致、但乐于倾听公司的意见和想法，建议公司提前准备答辩材料，疑难案件可提前和法官沟通思路。',
+  },
+  '王琳娜': {
+    court: '上海市黄浦区人民法院',
+    chamber: '民事审判庭（资深法官）',
+    contact: '53584777-20151',
+    assistant: '阳昕然',
+    assistantContact: '53584777-20152',
+    clerk: '牛佳/朱继华',
+    clerkContact: '—',
+    notes: '王法官为资深法官，审理案件清晰顺畅，请提交答辩和证据，法官助理阳昕然很热心、会帮忙公司劝原告撤诉。',
+  },
+  '俞叔涛': {
+    court: '上海市黄浦区人民法院',
+    chamber: '民事审判庭',
+    contact: '53584777-20161',
+    assistant: '—',
+    assistantContact: '—',
+    clerk: '严佳颖',
+    clerkContact: '53584777-20162',
+    notes: '俞法官曾将一起信息网络买卖合同案件移送至普陀法院，需要进一步了解法官对平台的整体想法。',
+  },
+  '高才': {
+    court: '上海市黄浦区人民法院',
+    chamber: '民事审判庭（青年法官）',
+    contact: '53584777-20051',
+    assistant: '—',
+    assistantContact: '—',
+    clerk: '—',
+    clerkContact: '—',
+    notes: '高法官（青年）审理案件快捷、思路清楚，如涉及模糊信息建议提前告知法官商业背景，方便法官了解案件及处理。',
+  },
+  '朱元达': {
+    court: '上海市黄浦区人民法院',
+    chamber: '民事审判庭（青年法官）',
+    contact: '53584777-20011',
+    assistant: '—',
+    assistantContact: '—',
+    clerk: '孙泓云',
+    clerkContact: '53584777-20012',
+    notes: '朱法官（青年）非常热心、审理案件思路清楚、案件会全面审查，建议对朱法官办理的案件充分了解案件情况、提前提交答辩和证据应诉。',
+  },
+};
+
+const CATEGORIES = [
+  { id: 'user-ban', label: '用户封号纠纷', count: 0 },
+  { id: 'merchant', label: '商家处置纠纷', count: 0 },
+  { id: 'ecommerce', label: '网购合同纠纷', count: 0 },
+  { id: 'contract', label: '其他合同纠纷', count: 0 },
+  { id: 'personality-rights', label: '笔记侵权纠纷', count: 0 },
+];
+
+
+
+const RESULT_LABELS = {
+  win1: '一审胜诉',
+  win2: '二审胜诉',
+  winRetry: '再审胜诉',
+  lose: '一审败诉',
+  lose1: '一审败诉',
+  procedural: '程序性',
+};
+
+function inferCourt(caseNo) {
+  const m = caseNo.match(/[（(](\d{4})[）)]\s*([^\d]+\d+)/);
+  if (!m) return '';
+  const code = caseNo.replace(/[（(]\d{4}[）)]\s*/, '').split(/民/)[0];
+  if (caseNo.includes('沪0101')) return '上海市黄浦区人民法院';
+  if (caseNo.includes('沪02')) return '上海市第二中级人民法院';
+  if (caseNo.includes('沪民申')) return '上海市高级人民法院';
+  if (caseNo.includes('沪0112')) return '上海市闵行区人民法院';
+  if (caseNo.includes('粤03')) return '广州市中级人民法院';
+  if (caseNo.includes('粤0192')) return '广东省各区人民法院';
+  if (caseNo.includes('粤0605')) return '广东省各区人民法院';
+  if (caseNo.includes('粤0784')) return '广东省各区人民法院';
+  if (caseNo.includes('粤01民')) return '广州市中级人民法院';
+  if (caseNo.includes('云0112')) return '昆明市西山区人民法院';
+  if (caseNo.includes('云民申')) return '云南省高级人民法院';
+  if (caseNo.includes('辽0502')) return '本溪市平山区人民法院';
+  if (caseNo.includes('川3401')) return '四川省越西县人民法院';
+  if (caseNo.includes('琼0108')) return '海口市美兰区人民法院';
+  if (caseNo.includes('吉0193')) return '吉林新区人民法院';
+  if (caseNo.includes('豫0191')) return '郑州高新技术产业开发区人民法院';
+  if (caseNo.includes('鲁0104')) return '济南市槐荫区人民法院';
+  if (caseNo.includes('苏1311')) return '宿迁市宿豫区人民法院';
+  if (caseNo.includes('苏0506')) return '苏州市吴中区人民法院';
+  if (caseNo.includes('京0491')) return '北京市大兴区人民法院';
+  if (caseNo.includes('京0112')) return '北京市通州区人民法院';
+  return '';
+}
+
+const DATA = [
+  // ===== 用户封号纠纷 =====
+  // 恶意导流
+  {id:1, date:'2025.10.21', plaintiff:'闫天柱', caseNo:'（2025）沪0101民初13371号', court:'上海黄浦法院', judge:'孙韵清', result:'win1', claim:'500元', keywords:'贷款逾期,引流,平台规则', summary:'笔记设置"仅自己可见"不能证明发布时即作此设置；平台规则合法，用户点击同意即受约束', category:'user-ban', subcat:'恶意导流/引流违规', reason:'发布贷款逾期笔记引流；未持律师证以"闫律"自称误导公众', pdfFile:'20251021（收）闫天柱 一审胜诉.pdf', pdfUrl: null},
+  {id:2, date:'2026.02.06', plaintiff:'闫天柱', caseNo:'（2025）沪02民终14290号', court:'上海二中院', judge:'郑璐/章晓琳/黄亮', result:'win2', claim:'—', keywords:'二审维持,引流,平台规则', summary:'二审维持一审判决。二审法院认为原审认定事实清楚，适用法律正确，驳回上诉', category:'user-ban', subcat:'恶意导流/引流违规', reason:'同上，二审维持', pdfFile:'20260206（收）闫天柱 二审胜诉.pdf', pdfUrl: null},
+  {id:3, date:'2025.10.23', plaintiff:'季怡芸', caseNo:'（2025）沪0101民初15066号', court:'上海黄浦法院', judge:'孙韵清', result:'win1', claim:'300,000元', keywords:'爬取数据,导流,违规', summary:'平台规则合法，用户点击同意即受约束；举证责任在原告', category:'user-ban', subcat:'恶意导流/引流违规', reason:'违规爬取平台数据；多次引导公众联系原告导流', pdfFile:'20251023（收）季怡芸 一审胜诉.pdf', pdfUrl: null},
+  {id:4, date:'2026.01.26', plaintiff:'季怡芸', caseNo:'（2025）沪02民终13919号', court:'上海二中院', judge:'王晓梅/赵静/汤佳岭', result:'win2', claim:'—', keywords:'二审维持,爬取数据', summary:'审理程序瑕疵不足以构成程序违法；双方应受平台协议约束', category:'user-ban', subcat:'恶意导流/引流违规', reason:'同上，二审维持', pdfFile:'20260126（收）季怡芸 二审胜诉.pdf', pdfUrl: null},
+  {id:5, date:'2026.03.16', plaintiff:'边立星', caseNo:'（2025）沪0101民初33786号', court:'上海黄浦法院', judge:'孙韵清', result:'win1', claim:'50元', keywords:'贷款逾期,引流,网络安全', summary:'平台依法履行网络安全义务；平台规则明确用户不得引流，有权采取封禁措施', category:'user-ban', subcat:'恶意导流/引流违规', reason:'发布贷款逾期笔记引流；私募基金从业人员不符合逾期咨询资质', pdfFile:'20260316（收）边立星 一审胜诉.pdf', pdfUrl: null},
+  {id:6, date:'2026.02.09', plaintiff:'曾一洲', caseNo:'（2025）沪02民终14685号', court:'上海二中院', judge:'王晓梅/赵静/汤佳岭', result:'win2', claim:'456,000元', keywords:'问卷调查,恶意导流,举证责任', summary:'举证责任在用户；账号违规情况说明系平台合规履职，具有合法性', category:'user-ban', subcat:'恶意导流/引流违规', reason:'发布笔记引导购买问卷调查服务，恶意导流', pdfFile:'20260209（收）曾一洲 二审胜诉.pdf', pdfUrl: null},
+  {id:7, date:'2026.02.09', plaintiff:'宋紫怡', caseNo:'（2025）沪0101民初34877号', court:'上海黄浦法院', judge:'汤峥鸣', result:'win1', claim:'2,000元', keywords:'淫秽内容,引导添加微信', summary:'平台协议合法有效，平台有权采取封禁措施', category:'user-ban', subcat:'恶意导流/引流违规', reason:'在涉淫秽事件笔记下留言引导添加微信，客观上引流传播不良内容', pdfFile:'20260209（收）宋紫怡 一审胜诉.pdf', pdfUrl: null},
+  // 违规提供医疗建议
+  {id:8, date:'2025.10.31', plaintiff:'李茅', caseNo:'（2025）沪0101民初13939号', court:'上海黄浦法院', judge:'孙韵清', result:'win1', claim:'20,000元', keywords:'医疗建议,无资质,专业认证', summary:'平台规则合法，用户违规被封有合同依据；平台依法履行网络安全义务', category:'user-ban', subcat:'违规提供医疗建议', reason:'无资质发布医疗建议，无法通过平台专业认证', pdfFile:'20251031（收）李茅 一审胜诉.pdf', pdfUrl: null},
+  {id:9, date:'2026.02.13', plaintiff:'李茅', caseNo:'（2025）沪02民终14686号', court:'上海二中院', judge:'王晓梅/赵静/汤佳岭', result:'win2', claim:'—', keywords:'医疗建议,二审维持', summary:'平台履行《网络安全法》义务；平台采取封禁措施合法合理', category:'user-ban', subcat:'违规提供医疗建议', reason:'同上，二审维持', pdfFile:'20260213（收）李茅 二审胜诉.pdf', pdfUrl: null},
+  {id:12, date:'2025.11.24', plaintiff:'陈康', caseNo:'（2025）沪民申3739号', court:'上海高院', judge:'范倩/张雯/邵宁宁', result:'winRetry', claim:'—', keywords:'再审驳回,不符合条件', summary:'不符合再审条件', category:'user-ban', subcat:'违规提供医疗建议', reason:'同上，驳回再审申请', pdfFile:'20260310（收）陈康 再审胜诉.pdf', pdfUrl: null},
+  // 账号安全风险
+  {id:13, date:'2025.10.29', plaintiff:'闫珅', caseNo:'（2025）沪0101民初16730号', court:'上海黄浦法院', judge:'汤峥鸣', result:'win1', claim:'80元', keywords:'重复注册,非本人操作,安全风险', summary:'平台协议赋予行吟公司封禁权限；用户多次重复注册属违规行为，平台有权采取措施', category:'user-ban', subcat:'账号安全风险', reason:'2022–2025年多次重复注册，平台识别为非本人操作风险', pdfFile:'20251029（收）闫珅 一审胜诉.pdf', pdfUrl: null},
+  {id:14, date:'2026.02.11', plaintiff:'闫珅', caseNo:'（2025）沪02民终14346号', court:'上海二中院', judge:'王晓梅/赵静/汤佳岭', result:'win2', claim:'—', keywords:'网络安全法,违规数据,二审维持', summary:'平台收集违规数据符合《网络安全法》合法正当原则；《违规情况说明》具有合法性', category:'user-ban', subcat:'账号安全风险', reason:'同上，二审维持', pdfFile:'20260211（收）闫珅 二审胜诉.pdf', pdfUrl: null},
+  // 违规内容其他
+  {id:15, date:'2025.10.28', plaintiff:'王腾', caseNo:'（2025）沪0101民初22784号', court:'上海黄浦法院', judge:'刘杰', result:'win1', claim:'80元', keywords:'耗材,有偿操作指引', summary:'用户发布信息应遵守平台约定；服务协议及社区公约明确约定违规行为及处理措施', category:'user-ban', subcat:'违规内容其他具体类型', reason:'引导消费者规避第三方配套耗材，有偿提供操作指引并实际获益，损害第三方权益', pdfFile:'20251028（收）王腾 一审胜诉.pdf', pdfUrl: null},
+  {id:16, date:'2026.02.26', plaintiff:'武灵新', caseNo:'（2025）沪0101民初33443号', court:'上海黄浦法院', judge:'高才', result:'win1', claim:'1,000元', keywords:'入党咨询,商品链接,党建营销', summary:'用户应遵守平台约定；服务协议及社区规范明确约定违规处理措施', category:'user-ban', subcat:'违规内容其他具体类型', reason:'发布入党咨询笔记并附商品链接引导好评，党建营销违规', pdfFile:'20260226（收）武灵新 一审胜诉.pdf', pdfUrl: null},
+  {id:17, date:'2026.03.10', plaintiff:'徐浩瀚', caseNo:'（2026）沪0101民初596号', court:'上海黄浦法院', judge:'孙韵清', result:'win1', claim:'50元', keywords:'烟草广告,涉外案件,中国法律', summary:'涉外案件适用中国法律；封禁措施符合法律法规及平台规则', category:'user-ban', subcat:'违规内容其他具体类型', reason:'违法发布烟草广告', pdfFile:'20260310（收）徐浩瀚 一审胜诉.pdf', pdfUrl: null},
+  {id:18, date:'2026.01.12', plaintiff:'符灵帅', caseNo:'（2025）沪02民终14854号', court:'上海二中院', judge:'王冬寅/黄亮/章晓琳', result:'win2', claim:'10,000元', keywords:'二手贴身衣物,格式条款,加粗提示', summary:'平台有权依据协议、社区公约永久封禁账号；协议以加粗形式提示用户，不构成不公平格式条款', category:'user-ban', subcat:'违规内容其他具体类型', reason:'发布售卖男性二手贴身衣物信息，涉及特殊性癖好私人物品', pdfFile:'20260112（收）符灵帅 二审胜诉.pdf', pdfUrl: null},
+  {id:19, date:'2026.02.09', plaintiff:'曾警仪', caseNo:'（2025）沪02民终14203号', court:'上海二中院', judge:'王晓梅/赵静/汤佳岭', result:'win2', claim:'9,400元', keywords:'非法牟利,举证责任,投诉', summary:'举证责任在用户；平台作为运营主体需履行网络安全义务，采取封禁措施合法合理', category:'user-ban', subcat:'违规内容其他具体类型', reason:'被其他用户投诉存在非法牟利行为', pdfFile:'20260209（收）曾警仪 二审胜诉.pdf', pdfUrl: null},
+  {id:20, date:'2025.11.11', plaintiff:'倪雯', caseNo:'（2025）沪0101民初24335号', court:'上海黄浦法院', judge:'汤峥鸣', result:'win1', claim:'50元', keywords:'交易风险,监管义务,财产安全', summary:'平台协议合法有效；平台具有监管义务，规范规则旨在保障用户信息安全和财产安全', category:'user-ban', subcat:'违规内容其他具体类型', reason:'发布存在交易风险的内容', pdfFile:'20251111（收）倪雯 一审胜诉.pdf', pdfUrl: null},
+  // 原因未明示
+  {id:21, date:'2026.02.25', plaintiff:'李亚茹', caseNo:'（2026）沪0101民初2741号', court:'上海黄浦法院', judge:'汤峥鸣', result:'procedural', claim:'—', keywords:'N1内容,永久禁播,不予受理', summary:'本案不属于人民法院受理民事诉讼的范围', category:'user-ban', subcat:'违规内容原因未明示', reason:'直播中提及N1相关内容，平台永久禁止开播（裁定驳回起诉）', pdfFile:'20260225（收）李亚茹 一审胜诉.pdf', pdfUrl: null},
+  {id:22, date:'2026.02.27', plaintiff:'顾青', caseNo:'（2025）沪0101民初15693号', court:'上海黄浦法院', judge:'汤峥鸣', result:'win1', claim:'54,590元', keywords:'违规,平台规则,原因未明', summary:'平台协议合法有效；平台有权采取封禁措施，相关损失由用户自行承担', category:'user-ban', subcat:'违规内容原因未明示', reason:'违反法律法规及平台规则，具体原因未在判决中明示', pdfFile:'20260227（收）顾青 一审胜诉.pdf', pdfUrl: null},
+  // 个人信息
+  {id:23, date:'2026.02.10', plaintiff:'柳婷', caseNo:'（2026）沪0101民初499号', court:'上海黄浦法院', judge:'汤峥鸣', result:'win1', claim:'50元', keywords:'封号,实名信息,解冻', summary:'平台协议合法有效；平台有权采取封禁措施，用户诉请解封无依据', category:'user-ban', subcat:'封号后个人信息处理纠纷', reason:'账号因违规被封后要求解冻实名信息，法院支持平台做法', pdfFile:'20260210（收）柳婷 一审胜诉.pdf', pdfUrl: null},
+
+  // ===== 网购合同纠纷 =====
+  // 商家欺诈
+  {id:24, date:'2025.10.31', plaintiff:'廖谋臣', caseNo:'（2025）云0112民初14418号', court:'昆明西山法院', judge:'周永婷', result:'win1', claim:'44,950元', keywords:'荔枝,进口,十倍赔偿,第三人缺席', summary:'行吟公司以第三人身份参与诉讼（缺席），法院认为未讨论行吟责任，以驳回其他诉讼请求方式一并处理；行吟无需承担任何责任', category:'ecommerce', subcat:'商家欺诈', goods:'澳大利亚进口荔枝（4,495元）', disputeFocus:'商家销售无合法进口手续食品（十倍赔偿）；行吟以第三人身份被追加，原告认为平台有监管义务', merchantResult:'✅ 商家退还货款4,495元并十倍赔偿44,950元', pdfFile:'20251031（收）廖谋臣 一审胜诉.pdf', pdfUrl: null},
+  {id:25, date:'2025.12.18', plaintiff:'李定蓉', caseNo:'（2025）云0112民初24150号', court:'昆明西山法院', judge:'邓睿', result:'win1', claim:'57,000元', keywords:'宫崎芒果,进口,连带责任', summary:'行吟公司系小红书运营方，未与原告建立买卖合同关系，且已将案涉货款退还原告；原告主张连带责任缺乏事实和法律依据，本院不予支持', category:'ecommerce', subcat:'商家欺诈', goods:'日本进口宫崎芒果（5,700元，6盒）', disputeFocus:'商家销售无合法进口手续食品；原告投诉小红书官方后拒绝披露卖家信息，主张平台连带责任', merchantResult:'✅ 商家赔偿三倍损失17,100元', pdfFile:'20251218（收）李定蓉 一审胜诉.pdf', pdfUrl: null},
+  {id:26, date:'2025.12.10', plaintiff:'王丽', caseNo:'（2025）辽0502民初2000号', court:'本溪平山法院', judge:'李玉玺', result:'win1', claim:'约25,000元', keywords:'和田玉,注意义务,消保法第44条', summary:'行吟作为平台企业通过相关证据已证实尽到相应注意义务，不符合《消费者权益保护法》第44条第2款承担连带责任的情形，驳回对行吟的诉讼请求', category:'ecommerce', subcat:'商家欺诈', goods:'新疆和田玉手串及吊坠（37,050元）', disputeFocus:'商品无矿区产地检测证书，存在虚假宣传、质量问题；向行吟投诉后未予答复，原告主张行吟未履行合理监管义务应承担连带责任（消保法第44条第2款）', merchantResult:'✅ 商家退款37,050元并三倍赔偿111,150元，合同解除', pdfFile:'20251210（收）王丽 一审胜诉.pdf', pdfUrl: null},
+  {id:27, date:'2025.11.28', plaintiff:'赵梓宏', caseNo:'（2025）粤03民终33232号', court:'广州中院', judge:'曹旭海/侯锚/许启选', result:'win2', claim:'约10,000元', keywords:'进口化妆品,欺诈举证,三倍赔偿', summary:'原告不能举证商品存在违法违规问题，欺诈不成立，驳回对商家及行吟公司的三倍赔偿诉请', category:'ecommerce', subcat:'商家欺诈', goods:'进口化妆品（100元）', disputeFocus:'原告主张商家未如实披露发货地及货源，构成欺诈；二审坚持行吟上海公司应承担三倍赔偿', merchantResult:'❌ 驳回上诉维持原判（一审商家不担责，原告无法举证欺诈）', pdfFile:'20251203（收）赵梓宏 二审胜诉.pdf', pdfUrl: null},
+  {id:28, date:'2025.12.05', plaintiff:'梁君瑜', caseNo:'（2025）粤0605民初41248号', court:'佛山南海法院', judge:'刘哲', result:'win1', claim:'约9,000元', keywords:'翡翠手镯,定制,连带退款', summary:'行吟公司为被告（缺席），原告请求行吟与商家共同退还货款及承担资金占用利息，缺乏法律依据，不予支持', category:'ecommerce', subcat:'商家欺诈', goods:'翡翠手镯定制（42,500元）', disputeFocus:'商家承诺加工视频及图片未提供，商品与承诺严重不符；原告主张行吟公司应与商家共同退还货款及资金占用利息', merchantResult:'✅ 商家退款34,500元及资金占用利息', pdfFile:'20251205（收）梁君瑜 一审胜诉.pdf', pdfUrl: null},
+  {id:29, date:'2025.10.10', plaintiff:'李哑鸣', caseNo:'（2025）粤0192民初10982号', court:'佛山南海法院', judge:'胡敏', result:'win1', claim:'500元', keywords:'山羊绒,平台明知,侵权举证', summary:'行吟公司并非买卖合同当事方；原告未举证平台明知或应知商家侵权；驳回对行吟公司的全部诉讼请求', category:'ecommerce', subcat:'商家欺诈', goods:'山羊绒衣物（159.9元）', disputeFocus:'商家直播宣传100%山羊绒，检测不符；原告向平台投诉后认为平台回复敷衍，要求行吟与商家共同退款赔偿', merchantResult:'✅ 商家退还货款159.9元（不支持三倍赔偿）', pdfFile:'20251010（收）李哑鸣 一审胜诉.pdf', pdfUrl: null},
+  {id:30, date:'2026.02.27', plaintiff:'李哑鸣', caseNo:'（2025）粤01民终27831号', court:'广州中院', judge:'吴湛/郑怀勇/钟淑敏', result:'win2', claim:'—', keywords:'山羊绒,免责认定,二审维持', summary:'二审维持一审判决，行吟公司非买卖合同相对方且原告无证据证明平台明知或应知侵权，免责认定得以维持', category:'ecommerce', subcat:'商家欺诈', goods:'山羊绒衣物（159.9元）', disputeFocus:'同一审，二审坚持行吟公司应共同承担退款及赔偿责任', merchantResult:'✅ 维持一审（商家退款159.9元）', pdfFile:'20260227（收）李哑鸣 二审胜诉.pdf', pdfUrl: null},
+  {id:31, date:'2026.03.06', plaintiff:'刘擎', caseNo:'（2025）鲁0104民初12396号', court:'济南槐荫法院', judge:'刘佳', result:'win1', claim:'3,842.8元', keywords:'桑蚕丝,粘纤,检测,欺诈认定', summary:'行吟公司在答辩中认可旭鹿商行系销售者，但平台自身无欺诈行为，不承担赔偿责任；驳回对行吟公司全部诉讼请求', category:'ecommerce', subcat:'商家欺诈', goods:'桑蚕丝服装4件（796元）', disputeFocus:'商家直播称100%桑蚕丝，检测为100%粘纤；原告认为行吟充当售假平台未履行监管责任，应共同承担赔偿责任', merchantResult:'✅ 商家赔偿2,388元+退款796元+鉴定费592元+公告费400元+交通费66.8元', pdfFile:'20260306（收）刘擎 一审胜诉.pdf', pdfUrl: null},
+  // 七日无理由退货
+  {id:32, date:'2026.02.28', plaintiff:'郑灿', caseNo:'（2025）京0491民初29217号', court:'北京大兴法院', judge:'方淑梅', result:'win1', claim:'75,000元', keywords:'翡翠玉石,撤回诉请,七日退货', summary:'原告当庭撤回对行吟科技公司的全部诉讼请求，法院不持异议；判决仅判令商家退款及利息，对行吟无任何判令', category:'ecommerce', subcat:'七日无理由退货', goods:'翡翠玉石（苹果绿，75,000元）', disputeFocus:'商家拒绝七日无理由退货；原告起诉行吟要求披露商家实名信息（庭审中撤回）', merchantResult:'✅ 商家退还货款75,000元及资金占用利息，合同解除', pdfFile:'20260228（收）郑灿 一审胜诉.pdf', pdfUrl: null},
+  {id:33, date:'2025.12.23', plaintiff:'庞月萍', caseNo:'（2025）川3401民初8807号', court:'四川越西法院', judge:'龙晓鸿', result:'win1', claim:'62,000元', keywords:'翡翠饰品,第三人缺席', summary:'行吟公司以第三人身份参与诉讼（缺席），法院未讨论行吟责任，以驳回其他诉讼请求方式一并处理；行吟无需承担任何责任', category:'ecommerce', subcat:'七日无理由退货', goods:'翡翠饰品三件（62,000元）', disputeFocus:'收货后发现实物与直播展示存在明显色差，拒绝退货；原告主张平台诉讼主体适格并列为第三人', merchantResult:'✅ 商家退还货款62,000元', pdfFile:'20251223（收）庞月萍 一审胜诉.pdf', pdfUrl: null},
+  {id:34, date:'2025.12.30', plaintiff:'朱钰婷', caseNo:'（2025）琼0108民初12217号', court:'海口美兰法院', judge:'阳力平', result:'win1', claim:'500元', keywords:'聊斋志异,盲盒,全部驳回', summary:'行吟公司为被告（缺席），原告诉请因商品页面已显眼标注规则且证据不足而被驳回；法院未讨论行吟责任，驳回全部诉讼请求一并含行吟', category:'ecommerce', subcat:'七日无理由退货', goods:'聊斋志异盲盒（500元）', disputeFocus:'拆封后要求退款，商家以页面标注"拆卡后不退不换"为由拒绝；行吟被列为被告但原告诉请集中于商家', merchantResult:'❌ 驳回原告全部诉讼请求（商家不担责）', pdfFile:'20251230（收）朱钰婷 一审胜诉.pdf', pdfUrl: null},
+  {id:35, date:'2026.03.23', plaintiff:'杜晓鸥', caseNo:'（2026）吉0193民初2281号', court:'长春新区法院', judge:'李威', result:'win1', claim:'14,551.6元', keywords:'徽章商品,信息披露,小红书科技', summary:'小红书科技有限公司以第三人身份参与诉讼；原告要求平台披露商家完整身份信息，法院判决仅判令商家退款及承担违约损失，对平台的信息披露请求未予支持', category:'ecommerce', subcat:'七日无理由退货', goods:'徽章商品（16,721.5元）', disputeFocus:'卖家通过小红书私信引导微信转账，收款后大部分未发货；原告要求小红书科技披露商家完整身份信息，主张平台未对私信交易风险充分提示应承担责任', merchantResult:'✅ 商家退款14,551.60元及违约损失', pdfFile:'20260323（收）杜晓鸥 一审胜诉.pdf', pdfUrl: null},
+  // 发票/合同履行
+  {id:36, date:'2025.12.29', plaintiff:'崔天立', caseNo:'（2025）沪0112民初41950号', court:'上海闵行法院', judge:'张慧', result:'win1', claim:'约2,000元', keywords:'毛衣,发票,非买卖合同方', summary:'行吟公司与原告不具有买卖合同关系，不承担卖方义务；平台不存在违反服务管理义务情形；驳回对行吟公司全部诉讼请求', category:'ecommerce', subcat:'发票/合同履行', goods:'女士毛衣、女士上衣各一件（合计1,190元）', disputeFocus:'商家拒绝开具符合要求的发票，七日无理由退货未获支持；原告主张行吟作为平台对商家退款义务承担连带责任', merchantResult:'❌ 驳回原告全部诉讼请求（商家不担责）', pdfFile:'20251229（收）崔天立 一审胜诉.pdf', pdfUrl: null},
+  {id:37, date:'2025.11.03', plaintiff:'刘晓娜', caseNo:'（2025）京0491民初9783号', court:'北京大兴法院', judge:'崔晓光', result:'win1', claim:'22,909元', keywords:'培育钻,经营者信息,连带责任', summary:'平台能提供经营者信息，不适用消费者权益保护法兜底连带责任；未有证据证明平台明知或应知商家侵权；驳回对行吟公司的连带责任主张', category:'ecommerce', subcat:'发票/合同履行', goods:'培育钻（22,909元）', disputeFocus:'商家承诺提交相关单证和资料但未履行；原告向行吟投诉后认为平台拒绝履行管理义务，主张行吟承担连带责任', merchantResult:'✅ 商家退还货款22,909元及邮寄费66元，合同解除', pdfFile:'20251103（收）刘晓娜 一审胜诉.pdf', pdfUrl: null},
+  // 商品质量/资质
+  {id:38, date:'2025.10.31', plaintiff:'陈冰', caseNo:'（2025）沪0101民初12054号', court:'上海黄浦法院', judge:'朱元达', result:'win1', claim:'2,550元', keywords:'琉璃项链,连带责任', summary:'行吟公司为被告，原告主张其因监管不力承担连带赔偿；法院以原告对行吟公司的连带责任请求不予支持，判决驳回', category:'ecommerce', subcat:'商品质量/资质', goods:'穆拉诺琉璃多层项链（850元）', disputeFocus:'商家宣传进口产品但无法提供报关单，质量存在问题；平台以隐私为由拒绝披露商家信息，原告主张平台监管不力应承担连带责任（消保法第44条第2款）', merchantResult:'✅ 商家退还货款850元并赔偿损失2,550元', pdfFile:'20251031（收）陈冰 一审胜诉.pdf', pdfUrl: null},
+  {id:39, date:'2025.11.10', plaintiff:'晋磊', caseNo:'（2025）豫0191民初29923号', court:'郑州高新区法院', judge:'汪涛', result:'win1', claim:'约35,000元', keywords:'蜜蜡手串,商家资质,连带责任', summary:'行吟已审核商家资质、披露经营者信息并积极协调售后，原告亦未提交证据证明行吟利用平台侵害消费者权益，驳回对行吟的诉讼请求', category:'ecommerce', subcat:'商品质量/资质', goods:'蜜蜡手串（19,988元）', disputeFocus:'商家直播宣传乌克兰俄罗斯产蜜蜡完美品相，原告认为存在虚假宣传；认为行吟未依法履行平台监管义务，应共同承担赔偿责任', merchantResult:'✅ 商家退款19,988元（不支持三倍赔偿）', pdfFile:'20251110（收）晋磊 一审胜诉.pdf', pdfUrl: null},
+  {id:40, date:'2026.02.12', plaintiff:'易玲', caseNo:'（2025）粤0784民初5274号', court:'广西蒙山法院', judge:'吕铁城', result:'win1', claim:'30,000元', keywords:'乌发粉,下架,必要措施', summary:'平台接到投诉后已将涉案产品下架，已采取必要措施；原告未举证平台存在其他需担责情形；驳回对行吟公司的责任主张', category:'ecommerce', subcat:'商品质量/资质', goods:'乌发粉染发产品（419元）', disputeFocus:'商家宣称纯中药不含化学成分，检测发现含有化学成分；原告接投诉后认为行吟未及时处理，主张平台与商家、生产商共同担责', merchantResult:'✅ 商家退款419元+赔偿1,257元+检测费2,500元+公证费1,400元；生产商承担连带责任', pdfFile:'20260212（收）易玲 一审胜诉.pdf', pdfUrl: null},
+  // 程序性结案
+  {id:41, date:'2025.11.24', plaintiff:'陈法久', caseNo:'（2025）苏1311民初9443号', court:'宿迁宿豫法院', judge:'李保锦', result:'procedural', claim:'—', keywords:'主体不适格,驳回起诉', summary:'原告主体不适格，裁定驳回起诉', category:'ecommerce', subcat:'程序性结案', goods:'—', disputeFocus:'原告主体不适格', merchantResult:'—', pdfFile:'—', pdfUrl: null},
+  {id:42, date:'2026.01.04', plaintiff:'何海', caseNo:'（2025）云民申4743号', court:'云南高院', judge:'席占涛/张庆泽/苏静巍', result:'winRetry', claim:'13,300元', keywords:'西洋参,再审驳回,免责确定', summary:'驳回再审申请，行吟免责最终确定', category:'ecommerce', subcat:'程序性结案', goods:'西洋参', disputeFocus:'驳回再审申请', merchantResult:'—', pdfFile:'—', pdfUrl: null},
+
+  // ===== 其他合同纠纷 =====
+  {id:43, date:'2026.01.29', plaintiff:'李子钰', caseNo:'（2025）沪0101民初33025号', court:'上海黄浦法院', judge:'舒海卫', result:'procedural', claim:'10,541元', keywords:'充值打赏,主体不适格', summary:'法院认定案涉账号及支付方式实名认证人均系原告母亲，原告非适格主体，裁定驳回起诉；行吟无需就实质责任作出应对', category:'contract', subcat:'充值/打赏纠纷', role:'被告', caseOverview:'未成年人擅自使用母亲账号充值打赏；原告系未成年人以自己名义起诉', pdfFile:'20260129（收）李子钰 充值打赏-一审胜诉.pdf', pdfUrl: null},
+  {id:44, date:'2026.03.11', plaintiff:'张润洋', caseNo:'（2025）沪0101民初27977号', court:'上海黄浦法院', judge:'周红林', result:'win1', claim:'约5,000元', keywords:'薯条推广,订单完成,退款拒绝', summary:'《薯条服务协议》明确预期效果数据仅供参考；六个订单薯币已消耗完毕或退还，合同履行完毕；驳回退款及三倍赔偿请求', category:'contract', subcat:'推广服务合同纠纷', role:'被告', caseOverview:'购买薯条推广服务后对效果不满要求退款', pdfFile:'20260317（收）张润洋 服务合同-一审胜诉.pdf', pdfUrl: null},
+  {id:45, date:'2026.02.25', plaintiff:'行星推进（广州）供应链科技有限公司', caseNo:'（2025）沪0101民初24781号', court:'上海黄浦法院', judge:'俞叔涛', result:'win1', claim:'80元', keywords:'账号归属,实名认证,无赔偿责任', summary:'行吟表示可在符合平台规则前提下协助变更；法院判令行吟协助办理实名认证变更，行吟配合执行即可，无赔偿责任', category:'contract', subcat:'账号归属权纠纷', role:'被告', caseOverview:'企业主张小红书账号属公司虚拟财产；法院认定账号归企业所有，判令被告协助办理变更', pdfFile:'20260225（收）行星推进公司 服务合同-一审胜诉.pdf', pdfUrl: null},
+  {id:46, date:'2026.03.23', plaintiff:'海南爱凤文化传播有限公司', caseNo:'（2025）沪02民终1798号', court:'上海二中院', judge:'陈晓宇/王蓓蓓/王冬娟', result:'win2', claim:'57,940,133元', keywords:'MCN合同,账号归博主,经纪合同', summary:'行吟以第三人身份陈述账号所有权归平台，用户仅享有使用权，不得擅自转让；法院认定账号归博主个人，行吟无赔偿责任', category:'contract', subcat:'账号归属权纠纷', role:'第三人', caseOverview:'MCN公司主张博主在小红书等多平台账号归公司所有；二审维持原判，账号归博主个人', pdfFile:'20260323（收）海南爱凤文化传播有限公司 虚拟财产合同-二审胜诉.pdf', pdfUrl: null},
+  {id:47, date:'2026.03.19', plaintiff:'杨兴川', caseNo:'（2025）京0112民初53339号', court:'北京通州法院', judge:'秦运瑞', result:'win1', claim:'4,800元', keywords:'合作协议,非协议方,连带责任', summary:'行吟公司并非合作协议一方当事人，亦无证据显示其与寓安公司存在合作关系；驳回连带责任主张', category:'contract', subcat:'合作协议纠纷', role:'被告', caseOverview:'三方合作协议纠纷，要求退还合同款4,800元；法院支持对寓安公司的退款请求，驳回对行吟公司的连带责任主张', pdfFile:'20260319（收）杨兴川 其他-一审胜诉.pdf', pdfUrl: null},
+  {id:48, date:'2026.01.29', plaintiff:'路云', caseNo:'（2025）苏0506民初15253号', court:'苏州吴中法院', judge:'韩亚光', result:'win1', claim:'9,900元', keywords:'第三方服务商,第三人缺席', summary:'行吟以第三人身份参与（缺席），法院判决仅判令钟数公司退款，驳回其他诉讼请求；行吟无需承担任何责任', category:'contract', subcat:'第三方服务合同纠纷', role:'第三人', caseOverview:'委托第三方服务商钟数公司办理小红书店铺认证未果，要求退款；被告为钟数公司，非行吟', pdfFile:'20260211（收）路云 服务合同-一审胜诉.pdf', pdfUrl: null},
+
+  // ===== 商家处置纠纷 =====
+  {id:49, date:'2025.10.23', plaintiff:'曾一洲', caseNo:'（2025）沪0101民初2234号', court:'上海黄浦法院', judge:'王琳娜', result:'win1', claim:'456,000元', keywords:'导流,封禁解封,限流合同依据', summary:'平台初步封禁后经复核查明系同行恶意举报遂解封，程序合法；笔记内容符合禁止推广规定，限流有合同依据；原告未举证其他限制措施，诉请不予支持', category:'merchant', subcat:'商家导流/不安全交易', disposal:'账号被多次处罚后永久封禁；笔记被限流下架', dispReason:'账号存在第三方交易导流；笔记属于禁止推广内容（调查/论文代写类）', plaintiffClaim:'处罚过于频繁，要求解封账号及赔偿销售损失', pdfFile:'20251023（收）曾一洲 服务合同（商家）案 判决书.pdf', pdfUrl: null},
+  {id:50, date:'2025.10.24', plaintiff:'曾警仪', caseNo:'（2025）沪0101民初10071号', court:'上海黄浦法院', judge:'汤峥鸣', result:'win1', claim:'560,000元', keywords:'导流,交易安全,解封合法', summary:'封禁系维护网络秩序和交易安全的必要措施；经核实举报后解封，符合合同约定；封禁期间损失无赔偿依据', category:'merchant', subcat:'商家导流/不安全交易', disposal:'账号因被举报存在非正当手段牟利被永久封禁，后解封', dispReason:'被其他用户举报存在非法牟利行为', plaintiffClaim:'要求赔偿封禁期间店铺收入损失', pdfFile:'20251024（收）曾警仪 服务合同（商家）案 判决书.pdf', pdfUrl: null},
+  {id:51, date:'2025.12.26', plaintiff:'玄武区守艺匠商贸中心', caseNo:'（2025）沪0101民初30208号', court:'上海黄浦法院', judge:'舒海卫', result:'win1', claim:'3,000元', keywords:'售假,抽检,钓鱼执法', summary:'抽检依据《商品抽检管理规范》进行，有照片佐证；假货认定有据；钓鱼执法主张无法律依据；处罚有合同依据', category:'merchant', subcat:'售假/假冒商品', disposal:'扣除积分25分、违约金2,000元、永久冻结店铺', dispReason:'店铺商品经鉴定为假冒商品', plaintiffClaim:'抽检程序违规（钓鱼执法），要求返还罚款并解冻店铺', pdfFile:'20251226（收）唐紫瑜 服务合同（商家）.pdf', pdfUrl: null},
+  {id:52, date:'2026.01.30', plaintiff:'深圳典雅珠宝有限公司', caseNo:'（2025）沪0101民初18517号', court:'上海黄浦法院', judge:'朱元达', result:'lose', claim:'2,717,222元', keywords:'优惠券,八折调整,优猷股东,连带责任', summary:'套券行为有合同依据，处置方向正确；但法院基于公平原则按八折调整，559,444元须返还；行吟公司作为优猷唯一股东无法证明财产独立，依《公司法》第23条第3款承担连带责任', category:'merchant', subcat:'违规套取优惠券', disposal:'冻结店铺资金并扣划券款', dispReason:'以"足金饰品"名义销售黄金投资品绕过用券限制；直播间公开教消费者多注册账号薅新人券；两天套取平台补贴约270万元', plaintiffClaim:'平台错误划扣自有资金，要求返还全额及资金占用损失', pdfFile:'20260130（收）深圳典雅珠宝有限公司 服务合同（商家）.pdf', pdfUrl: null},
+  {id:53, date:'2025.10.20', plaintiff:'海口龙华区庚梦百货商行', caseNo:'（2025）沪0101民初25286号', court:'上海黄浦法院', judge:'汤峥鸣', result:'win1', claim:'50,555元', keywords:'洗钱,交易安全,冻结180天,涉诈', summary:'消费者集中投诉含警方涉诈提示可作为违规认定依据；扣款金额无明显不当；冻结180天期限合理，期满可申请解除', category:'merchant', subcat:'涉嫌洗钱/危及交易安全', disposal:'扣除保证金8,000元、冻结店铺待提现货款42,555元', dispReason:'消费者集中投诉（100余笔），买家购买充值服务后接警方涉嫌诈骗提示', plaintiffClaim:'已提交充值到账证明，主张不存在违规，要求返还保证金及解冻货款', pdfFile:'20251020（收）海口龙华区庚梦百货商行 服务合同（商家）案 判决书.pdf', pdfUrl: null},
+  {id:54, date:'2025.12.02', plaintiff:'上海小春珠宝首饰有限公司', caseNo:'（2025）沪0101民初13971号', court:'上海黄浦法院', judge:'汤峥鸣', result:'win1', claim:'—', keywords:'混淆商品,店铺规则,商家账号', summary:'账号主页留有门店地址、引导私信询价，具有商家身份属性可适用店铺规则；混淆商品认定有据；投流禁止属于限流的当然结果', category:'merchant', subcat:'混淆商品', disposal:'账号流量限制、聚光投流功能禁用', dispReason:'账号笔记提及Graff、Dior等管控品牌商品，无相应销售资质', plaintiffClaim:'店铺已关闭且未实际销售，不应适用店铺规则限制账号', pdfFile:'20251202（收）上海小春珠宝首饰有限公司 服务合同（商家）.pdf', pdfUrl: null},
+  {id:55, date:'2026.03.12', plaintiff:'海口龙华蓉碧菡百货店', caseNo:'（2025）沪0101民初35984号', court:'上海黄浦法院', judge:'舒海卫', result:'procedural', claim:'—', keywords:'原告注销,驳回起诉', summary:'原告在诉讼中已注销登记，不具备独立诉讼主体资格，裁定驳回起诉', category:'merchant', subcat:'原告注销', disposal:'—', dispReason:'—', plaintiffClaim:'起诉主张平台处置违规', pdfFile:'20260312（收）海口龙华蓉碧菡百货店 服务合同（商户）.pdf', pdfUrl: null},
+  // 2026-04-01 新增：用户封号纠纷 4件
+  {id:56, date:'2026.03.24', plaintiff:'邹娟', caseNo:'（2025）沪0101民初35428号', court:'上海黄浦法院', judge:'蒋春', result:'win1', claim:'50,000元', keywords:'蒲公英合作,导流1688,售假,永久限流', summary:'平台协议合法有效；对原告账号和笔记的处罚并无不当；平台处罚无需警告前置', category:'user-ban', subcat:'恶意导流/引流违规', reason:'通过蒲公英合作发布笔记，平台认定为违规售卖假冒品牌商品并导流至1688，账号永久限流', pdfFile:'20260326（收）邹娟 服务合同（用户）-【古力】-一审胜诉-(2025)沪0101民初35428号.pdf', pdfUrl: null},
+  {id:57, date:'2026.03.24', plaintiff:'吴明慧', caseNo:'（2026）沪0101民初844号', court:'上海黄浦法院', judge:'蒋春', result:'win1', claim:'1,000元', keywords:'试管婴儿,非法领养,薯币虚拟财产', summary:'协议中对用户可能承担责任的条款已加粗特别标注，起到提示作用；平台依协议封禁有合同依据；薯币退还途径存在，原告放弃系自身选择', category:'user-ban', subcat:'违规内容（其他类型）', reason:'发布试管婴儿相关内容，平台认定为非法领养相关违规', pdfFile:'20260326（收）吴明慧 服务合同（用户）-【雅鑫】-一审胜诉-(2026)沪0101民初844号.pdf', pdfUrl: null},
+  {id:58, date:'2026.03.30', plaintiff:'高玉簪', caseNo:'（2026）沪02民终1075号', court:'上海二中院', judge:'唐墨华/赵俊/谢亚琳', result:'win2', claim:'2,000元', keywords:'卖惨引流,色情违规,直播,二审维持', summary:'高玉簪发布求助内容以卖惨形式引流获利，违反平台协议，展示不良生活作风，带有消极情绪；行吟依规处置未超合理限度；一审认定正确，应予维持', category:'user-ban', subcat:'违规内容（其他类型）', reason:'以卖惨形式在小红书发布求助内容并引流至其他平台收取红包获利，平台以色情违规封号', pdfFile:'20260331（收）高玉簪 服务合同（用户）-【雅鑫】-二审胜诉-（2026）沪02民终1075号.pdf', pdfUrl: null},
+  {id:59, date:'2026.03.31', plaintiff:'张鹤凝', caseNo:'（2026）沪0101民初2237号', court:'上海黄浦法院', judge:'汤峥鸣', result:'win1', claim:'—', keywords:'多设备违规,设备封禁,实名信息冻结,诈骗内容', summary:'平台协议合法有效；账号封禁、设备封禁均有合同依据；禁止注销后重新注册系平台账号管理必要举措，对个人信息的处理合法正当必要', category:'user-ban', subcat:'账号安全风险（频繁重复注册）', reason:'利用同一设备登录多个违规账号，向其他用户大量发送虚拟币、免费送等涉嫌欺诈内容', pdfFile:'20260331（收）张鹤凝 服务合同（用户）-【冬霞】-一审胜诉-（2026）沪0101民初2237号.pdf', pdfUrl: null},
+  // 2026-04-01 新增：商家处置纠纷 2件
+  {id:60, date:'2026.03.26', plaintiff:'柯惠琴', caseNo:'（2025）沪0101民初25264号', court:'上海黄浦法院', judge:'朱元达', result:'win1', claim:'448,000元', keywords:'问卷服务,笔记导流,账号店铺永久封禁', summary:'平台协议合法有效；柯惠琴发布笔记引导客户找"问卷收集商家"并附商品链接，行吟依协议处置属合理审查监管义务；格式条款第5.1条有效；无需赔偿', category:'merchant', subcat:'违规引导导流', disposal:'笔记封禁（仅自己可见）、账号及店铺永久封禁、商业权益永久限制', dispReason:'笔记引导客户找"问卷收集商家"并提供店铺商品链接，账号存在非正当手段牟利内容', plaintiffClaim:'平台封禁前未发警告属程序违法；处罚过重；格式条款第5.1条应无效', pdfFile:'20260331（收）柯惠琴 服务合同（商家）-【晨博】-一审胜诉-（2025）沪0101民初25264号.pdf', pdfUrl: null},
+  {id:61, date:'2026.03.31', plaintiff:'上海小春珠宝首饰有限公司', caseNo:'（2026）沪02民终148号', court:'上海二中院', judge:'费鸣/王晓梅/唐墨华', result:'win2', claim:'—', keywords:'混淆商品,Graff,Dior,聚光投流,二审维持', summary:'小春公司账号主页注明线下店铺地址，具有商家属性；混淆Graff/Dior等品牌有违规事实；一审认定正确，应予维持', category:'merchant', subcat:'混淆商品', disposal:'聚光投流功能禁用', dispReason:'账号笔记使用Graff、Dior等管控品牌名称并配有"复刻""平替"等描述，构成混淆商品', plaintiffClaim:'系普通用户非线上商家，店铺已关闭不应适用商家规则', pdfFile:'20260331（收）上海小春珠宝首饰有限公司 服务合同（商家）-【晨博】-二审胜诉-（2026）沪02民终148号.pdf', pdfUrl: null},
+  {id:62, date:'2025.10.13', plaintiff:'朱刘畅', caseNo:'（2025）豫01民终13685号', court:'郑州中院', judge:'周勇', result:'win2', claim:'1,000元', keywords:'隐私权', summary:'行吟发布当天即屏蔽处理；原告未举证行吟收到有效通知后未及时采取必要措施，免责', category:'personality-rights', subcat:'行吟免责（有说理）', xingyinRole:'被告', infType:'隐私权', infSummary:'某用户在小红书发布含朱刘畅个人信息的笔记，侵害其隐私权及人格权', pdfFile:'20251013（收）朱刘畅 笔记侵权（人格权）案 【雅鑫】-二审胜诉-（2025）豫01民终13685号.pdf', pdfUrl: null},
+  {id:63, date:'2025.10.15', plaintiff:'刘逸风', caseNo:'（2025）粤0192民初5385号', court:'广州互联网法院', judge:'邓毅君', result:'win1', claim:'10,000元', keywords:'名誉权', summary:'行吟收到举报通知后已采取删除措施，涉案内容浏览量较低，不承担侵权责任', category:'personality-rights', subcat:'行吟免责（有说理）', xingyinRole:'被告', infType:'名誉权', infSummary:'李丽珊借用他人账号在小红书发布侵权笔记，公开刘逸风个人信息并组织人肉搜索，侵害名誉权及个人信息权益', pdfFile:'20251015（收）刘逸风 笔记侵权（人格权）案【晨博】-一审胜诉-（2025）粤0192民初5385号民事判决书.pdf', pdfUrl: null},
+  {id:64, date:'2025.10.20', plaintiff:'陶雨涛', caseNo:'（2025）沪0101民初13298号', court:'上海黄浦法院', judge:'孙韵清', result:'win1', claim:'17,200元', keywords:'名誉权+隐私权', summary:'行吟收到原告举报后及时处理，已尽法定义务，无须承担连带责任', category:'personality-rights', subcat:'行吟免责（有说理）', xingyinRole:'被告', infType:'名誉权+隐私权', infSummary:'邓露在小红书发布评论及笔记，披露陶雨涛工作单位并散布其骗孕等诽谤内容，侵害其名誉权及隐私权', pdfFile:'20251020（收）陶⾬涛 笔记侵权（人格权）案 判决书【古力】-一审胜诉-（2025）沪0101民初13298号.pdf', pdfUrl: null},
+  {id:65, date:'2025.10.23', plaintiff:'胡雅茹', caseNo:'(2025)京0491民初11668号', court:'北京互联网法院', judge:'张倩', result:'win1', claim:'100,000元', keywords:'隐私权', summary:'涉案侵权行为通过私信发送，具有隐蔽性，不能证明行吟知道或应当知道，故不予支持', category:'personality-rights', subcat:'行吟免责（有说理）', xingyinRole:'被告', infType:'隐私权', infSummary:'刘逸峰使用小红书账号将原告手机号发送给商家或预约服务，侵害原告个人信息权益及隐私权', pdfFile:'20251023（收）胡雅茹 笔记侵权（人格权）案 判决书【雅鑫】-一审胜诉- (2025)京0491民初11668号.pdf', pdfUrl: null},
+  {id:66, date:'2025.10.30', plaintiff:'王蓝慧', caseNo:'(2025)京0491民初14984号', court:'北京互联网法院', judge:'高瞳辉', result:'win1', claim:'20,000元', keywords:'名誉权+隐私权', summary:'行吟收到举报后重点关注并指导完善举报，已披露涉案账号信息，履行法定义务，连带责任诉请于法无据，不予支持', category:'personality-rights', subcat:'行吟免责（有说理）', xingyinRole:'被告', infType:'名誉权+隐私权', infSummary:'被告王浩然在小红书发布含侮辱原告王蓝慧言论的微信群聊天记录截图笔记，侵害原告名誉权', pdfFile:'20251030（收） 王蓝慧 笔记侵权（人格权） -【无登记】-一审胜诉-(2025)京0491民初14984号.pdf', pdfUrl: null},
+  {id:67, date:'2025.11.12', plaintiff:'王贵', caseNo:'（2025）陕0113民初21846号', court:'西安灞桥法院', judge:'宋一林', result:'win1', claim:'10,000元', keywords:'名誉权+隐私权', summary:'行吟仅提供存储服务，收诉后已下架涉案笔记，未实施侵权行为，无需担责', category:'personality-rights', subcat:'行吟免责（有说理）', xingyinRole:'被告', infType:'名誉权+隐私权', infSummary:'多个小红书账号发布原告王贵餐馆捡狗剥皮吃狗的不实笔记，侵害其名誉权', pdfFile:'20251112(收）王贵 笔记侵权（人格权）-【无登记】-一审胜诉-（2025）陕 0113 民初 21846 号.pdf', pdfUrl: null},
+  {id:68, date:'2025.11.17', plaintiff:'南京元汇口腔门诊部有限公司', caseNo:'(2025)民初4294号', court:'南京建邺法院', judge:'戈平乐', result:'win1', claim:'300,000元', keywords:'名誉权+肖像权', summary:'行吟仅提供信息存储服务，不负过重主动审查义务，原告诉请不予支持', category:'personality-rights', subcat:'行吟免责（有说理）', xingyinRole:'被告', infType:'名誉权+肖像权', infSummary:'程乐乐在小红书等平台发布视频文章，质疑原告诊所过度拔牙、治疗方案不当，侵害原告名誉权', pdfFile:'20251117（收）南京元汇口腔门诊部有限公司 笔记侵权（人格权）-【雅鑫】-胜诉-（2025）民初4294号民事判决书.pdf', pdfUrl: null},
+  {id:69, date:'2025.11.20', plaintiff:'王益峰', caseNo:'（2025）浙07民终4194号', court:'金华中院', judge:'周巧慧/胡悠悠/赵天舒', result:'win2', claim:'3,000元', keywords:'名誉权+隐私权', summary:'行吟已屏蔽不当言论并封禁账号，与何晓玲无共同侵权行为，无需承担责任', category:'personality-rights', subcat:'行吟免责（有说理）', xingyinRole:'被告', infType:'名誉权+隐私权', infSummary:'何晓玲在小红书发布不实言论，侵害原告王益峰名誉权', pdfFile:'20251120（收）王益峰 笔记侵权（人格权）-【晨博】-二审胜诉- （2025）浙 07 民终 4194 号.pdf', pdfUrl: null},
+  {id:70, date:'2025.11.23', plaintiff:'张鸣飞', caseNo:'（2025）京0491民初19465号', court:'北京互联网法院', judge:'崔晓光', result:'win1', claim:'65,000元', keywords:'名誉权+隐私权', summary:'被诉内容已删除或处于诉讼静默状态，行吟已及时采取删除、屏蔽措施，不存在应承担侵权责任的情形', category:'personality-rights', subcat:'行吟免责（有说理）', xingyinRole:'被告', infType:'名誉权+隐私权', infSummary:'未知用户在小红书发布笔记，散布不实内容侵害张鸣飞名誉权及隐私权', pdfFile:'20251123（收） 张鸣飞 笔记侵权（人格权）-【晨博】-一审胜诉-（2025）京0491民初19465号.pdf', pdfUrl: null},
+  {id:71, date:'2025.11.24', plaintiff:'沈阳市沈北新区哈尼狗宠物门诊', caseNo:'（2025）辽01民终17414号', court:'沈阳中院', judge:'任江/王彦艳/高书林', result:'win2', claim:'20,000元', keywords:'名誉权+隐私权', summary:'行吟收到起诉状后对侵权视频及时下架，已采取必要措施，阻止信息进一步扩大，已履行相应义务，不承担责任', category:'personality-rights', subcat:'行吟免责（有说理）', xingyinRole:'被告', infType:'名誉权+隐私权', infSummary:'刘佳佳在小红书持续发布不妥图文言论，侵害原告沈阳市沈北新区哈尼狗宠物门诊名誉权', pdfFile:'20251124（收）沈阳市沈北新区哈尼狗宠物门诊 笔记侵权（人格权）-【雅鑫】-二审胜诉-（2025）辽01民终17414号.pdf', pdfUrl: null},
+  {id:72, date:'2025.11.26', plaintiff:'熊伟', caseNo:'（2025）沪0101民初19128号', court:'上海黄浦法院', judge:'吴建波', result:'win1', claim:'5,000元', keywords:'名誉权', summary:'行吟已向法院披露用户信息并处置侵权内容，尽到网络服务提供者义务，免责', category:'personality-rights', subcat:'行吟免责（有说理）', xingyinRole:'被告', infType:'名誉权', infSummary:'被告高玉琴在小红书笔记下评论称原告吃差价、骚扰辱骂，侵害原告名誉权', pdfFile:'20251126（收）熊伟 笔记侵权（人格权）-【寅杰】-一审胜诉-（2025）沪0101民初19128号.pdf', pdfUrl: null},
+  {id:73, date:'2025.12.01', plaintiff:'龙凯琳', caseNo:'（2025）渝0107民初11962号', court:'重庆九龙坡法院', judge:'罗洪', result:'win1', claim:'10,000元', keywords:'名誉权+隐私权', summary:'行吟履行了合理管理义务，未实施侵权行为，对原告要求行吟承担责任的诉求不予支持', category:'personality-rights', subcat:'行吟免责（有说理）', xingyinRole:'被告', infType:'名誉权+隐私权', infSummary:'胡明杰（被告）在小红书发布涉及龙凯琳的不实内容，侵害原告名誉权', pdfFile:'20251201（收）龙凯琳 笔记侵权（人格权）-【古力】-一审胜诉-（2025）渝0107民初11962号.pdf', pdfUrl: null},
+  {id:74, date:'2025.12.02', plaintiff:'张上明、肇庆市高要区爱乐堡教育咨询有限公司', caseNo:'（2025）粤1204民初5195号', court:'肇庆高要法院', judge:'伍文超', result:'win1', claim:'175,500元', keywords:'名誉权', summary:'收到起诉材料（初步证据）后依法及时采取合理措施防止侵权信息继续传播，履行平台监督管理职能，无需就本案承担责任', category:'personality-rights', subcat:'行吟免责（有说理）', xingyinRole:'被告', infType:'名誉权', infSummary:'林倩欣在小红书发布多篇笔记，捏造爱乐堡公司伙食、师资问题，侵害两原告名誉权', pdfFile:'20251202（收）张上明、肇庆市⾼要区爱乐堡教育咨询有限公司 笔记侵权（人格权）-【古力】-一审胜诉-（2025）粤1204 民初5195号.pdf', pdfUrl: null},
+  {id:75, date:'2025.12.03', plaintiff:'张琴', caseNo:'（2025）闽0111民初8331号', court:'福州晋安法院', judge:'林晶', result:'win1', claim:'10,000元', keywords:'名誉权+肖像权', summary:'收到举报后及时处置七条笔记，已尽事后管理义务；按申请披露用户手机号/ID等信息，不承担间接侵权责任', category:'personality-rights', subcat:'行吟免责（有说理）', xingyinRole:'被告', infType:'名誉权+肖像权', infSummary:'小红书账号（小红薯68777F1B）发布针对张琴的不实笔记共七条，内容侵害张琴名誉权', pdfFile:'20251203（收）张琴 笔记侵权（人格权）-【古力】-一审胜诉-（2025）闽0111民初8331号.pdf', pdfUrl: null},
+  {id:76, date:'2025.12.05', plaintiff:'潘宇恒', caseNo:'（2025）渝05民终9147号', court:'重庆五中院', judge:'邓方彬/陈莹/周海燕', result:'win2', claim:'20,000元', keywords:'隐私权', summary:'行吟在原告举报不实信息后及时删除，不存在过错，承担侵权责任的上诉理由不成立，不予支持', category:'personality-rights', subcat:'行吟免责（有说理）', xingyinRole:'被告', infType:'隐私权', infSummary:'未知用户在小红书发布针对潘宇恒的笔记，侵害其名誉权等人格权', pdfFile:'20251205（收）潘宇恒 笔记侵权（人格权）-【雅鑫】-二审胜诉-（2025）渝05民终9147号.pdf', pdfUrl: null},
+  {id:77, date:'2025.12.08', plaintiff:'上海谨语健康科技有限公司', caseNo:'（2025）沪0106民初29372号', court:'上海静安法院', judge:'刘鲁宁', result:'win1', claim:'10,000元', keywords:'名誉权', summary:'原告要求行吟承担连带责任，缺乏事实和法律依据，不予支持', category:'personality-rights', subcat:'行吟免责（有说理）', xingyinRole:'被告', infType:'名誉权', infSummary:'高冬炜在小红书发布避雷笔记，对原告月嫂中介公司作负面评价，原告主张其侵害名誉权', pdfFile:'20251208（收）上海谨语健康科技有限公司 笔记侵权（人格权）-【古力】-一审胜诉-（2025）沪0106民初29372号.pdf', pdfUrl: null},
+  {id:78, date:'2025.12.15', plaintiff:'深圳市正德良品科技有限公司、方书胜', caseNo:'（2025）粤0306民初19882号', court:'广州中院', judge:'张莉', result:'win1', claim:'50,000元', keywords:'名誉权', summary:'接到投诉前无证据证明行吟明知或应知侵权，不存在故意拖延或拒绝配合，处置符合行业规范，连带责任诉请于法无据，不予支持', category:'personality-rights', subcat:'行吟免责（有说理）', xingyinRole:'被告', infType:'名誉权', infSummary:'丁飞在小红书发布笔记称正德公司违法辞退并扣押员工护照，侵害正德公司及方书胜名誉权', pdfFile:'20251215（收）深圳市正德良品科技有限公司、方书胜 笔记侵权（人格权）-【晨博】-一审胜诉-（2025）粤0306民初19882号.pdf', pdfUrl: null},
+  {id:79, date:'2025.12.18', plaintiff:'王伟', caseNo:'（2025）辽0112民初10522号', court:'沈阳浑南法院', judge:'赵岩', result:'win1', claim:'5,000元', keywords:'名誉权+隐私权+肖像权', summary:'行吟已尽提示及监督义务，收到投诉后及时下架侵权内容，不承担侵权责任', category:'personality-rights', subcat:'行吟免责（有说理）', xingyinRole:'被告', infType:'名誉权+隐私权+肖像权', infSummary:'孙丽在小红书发布王伟照片、工作单位、女儿信息并对其品行作否定评价，侵害王伟隐私权、肖像权及名誉权', pdfFile:'20251218（收）王伟 笔记侵权（人格权）-【晨博】-一审胜诉-（2025）辽0112民初10522号.pdf', pdfUrl: null},
+  {id:80, date:'2025.12.18', plaintiff:'王敬华', caseNo:'（2025）浙0602民初10550号', court:'绍兴越城法院', judge:'赵珠艳', result:'win1', claim:'7,000元', keywords:'名誉权', summary:'行吟未主动提供用户信息未违法，不存在怠于行使责任，不存在名誉侵权行为，原告诉请依据不足，不予支持', category:'personality-rights', subcat:'行吟免责（有说理）', xingyinRole:'被告', infType:'名誉权', infSummary:'朱歆语在小红书发布两篇笔记，称王敬华拖欠薪资、骚扰女性，侵害原告名誉权', pdfFile:'20251218（收）王敬华 笔记侵权（人格权）-【古力】-一审胜诉- （2025）浙0602民初10550号.pdf', pdfUrl: null},
+  {id:81, date:'2025.12.29', plaintiff:'苏燕华、王璟宸', caseNo:'（2025）苏0412民初17988号', court:'常州武进法院', judge:'周运', result:'win1', claim:'35,000元', keywords:'名誉权+肖像权', summary:'于冰清发帖次日将内容删除，不承担责任，行吟公司不应承担连带责任', category:'personality-rights', subcat:'行吟免责（有说理）', xingyinRole:'被告', infType:'名誉权+肖像权', infSummary:'被告于冰清在小红书发布帖子，披露原告苏燕华住址及婚外亲密行为，侵害其名誉权', pdfFile:'20251229（收）苏燕华、王璟宸 笔记侵权（人格权）-【寅杰】-一审胜诉-（2025）苏0412民初17988号.pdf', pdfUrl: null},
+  {id:82, date:'2025.12.31', plaintiff:'LIN HAN', caseNo:'（2024）粤0606民初8423号', court:'佛山顺德法院', judge:'方璟华', result:'win1', claim:'100,000元', keywords:'名誉权', summary:'行吟已向法院披露用户信息，已履行协助义务；原告诉讼时效届满，驳回起诉', category:'personality-rights', subcat:'行吟免责（有说理）', xingyinRole:'被告', infType:'名誉权', infSummary:'被告梅绮柔在小红书发布多篇笔记，称原告林汉欺压学生、学术不端，侵害原告名誉权', pdfFile:'20251231（收）LIN HAN 笔记侵权（人格权）-【无登记】-一审胜诉-（2024）粤0606民初8423号.pdf', pdfUrl: null},
+  {id:83, date:'2025.12.31', plaintiff:'刘倩怡', caseNo:'（2025）沪0101民初22840号', court:'上海黄浦法院', judge:'谷小娟', result:'win1', claim:'8,000元', keywords:'名誉权+隐私权', summary:'原告主张行吟承担连带责任，缺乏依据，对其相应诉请不予支持', category:'personality-rights', subcat:'行吟免责（有说理）', xingyinRole:'被告', infType:'名誉权+隐私权', infSummary:'被告张明媚在小红书发布笔记侮辱原告刘倩怡并公开使用其肖像，侵害名誉权及肖像权', pdfFile:'20251231（收）刘倩怡 笔记侵权（人格权）-【寅杰】-一审胜诉-（2025）沪0101民初22840号.pdf', pdfUrl: null},
+  {id:84, date:'2026.01.20', plaintiff:'深圳市贞钻珠宝有限公司、杨腾', caseNo:'（2025）粤0303民初24882号', court:'广州中院', judge:'杨桂胜', result:'win1', claim:'15,000元', keywords:'名誉权', summary:'行吟在原告投诉时已及时处置，尽合理管理义务，不承担侵权责任', category:'personality-rights', subcat:'行吟免责（有说理）', xingyinRole:'被告', infType:'名誉权', infSummary:'小李哥公司及李宇芯公司在小红书发布称贞钻公司碧玺戒指被涂色的内容，侵害原告贞钻公司、杨腾名誉权', pdfFile:'20260120（收）深圳市贞钻珠宝有限公司、杨腾 笔记侵权（人格权）-【晨博】-一审胜诉- （2025）粤0303民初24882号.pdf', pdfUrl: null},
+  {id:85, date:'2026.01.23', plaintiff:'于晓群', caseNo:'（2025）川7101民初10825号', court:'成都铁路一院', judge:'赵小凤', result:'win1', claim:'50,000元', keywords:'名誉权', summary:'行吟收到举报后已处理相关内容，尽到合理管理义务，无需承担连带责任', category:'personality-rights', subcat:'行吟免责（有说理）', xingyinRole:'被告', infType:'名誉权', infSummary:'许正星在小红书发布两篇笔记，含侮辱性文字及原告家人隐私信息，侵害于晓群名誉权和隐私权', pdfFile:'20260123（收）于晓群 笔记侵权（人格权）-【古力】-一审胜诉-（2025）川7101民初10825号.pdf', pdfUrl: null},
+  {id:86, date:'2026.01.23', plaintiff:'杭州新琦迹素质文化艺术培训有限公司', caseNo:'（2025）浙0192民初12518号', court:'杭州互联网法院', judge:'赵溪', result:'win1', claim:'14,021元', keywords:'名誉权', summary:'原告主张行吟承担连带责任，缺乏事实基础和法律依据，不予支持', category:'personality-rights', subcat:'行吟免责（有说理）', xingyinRole:'被告', infType:'名誉权', infSummary:'庞缨苏在小红书发布虚假信息诋毁原告，侵害原告名誉权', pdfFile:'20260123（收）杭州新琦迹素质文化艺术培训有限公司 笔记侵权（人格权）-【古力】-一审胜诉-（2025）浙0192民初12518号.pdf', pdfUrl: null},
+  {id:87, date:'2026.02.02', plaintiff:'房凯', caseNo:'（2025）沪0101民初35866号', court:'上海黄浦法院', judge:'于家傲', result:'win1', claim:'805,454元', keywords:'名誉权+肖像权', summary:'行吟收到原告投诉及起诉状后及时断开涉案笔记链接，履行合理注意和补救义务，不构成侵权', category:'personality-rights', subcat:'行吟免责（有说理）', xingyinRole:'被告', infType:'名誉权+肖像权', infSummary:'被告李默轩在小红书发布多篇笔记，捏造原告房凯贪污、嫖娼、出轨等违法行为，侵害原告名誉权', pdfFile:'20260202（收）房凯 笔记侵权（人格权）-【古力】-一审胜诉-（2025）沪0101民初35866号.pdf', pdfUrl: null},
+  {id:88, date:'2026.02.12', plaintiff:'沈阳快发文化信息服务有限公司', caseNo:'（2025）辽0103民初5855号', court:'沈阳沈河法院', judge:'谢钢', result:'win1', claim:'26,000元', keywords:'名誉权', summary:'行吟对侵权发生无过错，事后已履行协助义务，原告对被告诉请无依据，不予支持', category:'personality-rights', subcat:'行吟免责（有说理）', xingyinRole:'被告', infType:'名誉权', infSummary:'未知用户在小红书发布"kuaifa考研机构骗人"等笔记，侵害沈阳快发文化信息服务有限公司名誉权', pdfFile:'20260212（收）沈阳快发文化信息服务有限公司-笔记侵权（人格权）-【古力】-一审胜诉- （2025）辽0103民初5855号.pdf', pdfUrl: null},
+  {id:89, date:'2026.02.27', plaintiff:'佛山市葆格荟供应链管理有限公司', caseNo:'（2025）粤0604民初19295号', court:'佛山禅城法院', judge:'黄小芳', result:'win1', claim:'200,000元', keywords:'名誉权', summary:'案涉笔记扩散范围不大，行吟已对案涉笔记下架处理，马乐评论行为不构成侵权，行吟无需担责', category:'personality-rights', subcat:'行吟免责（有说理）', xingyinRole:'被告', infType:'名誉权', infSummary:'用户马乐在小红书发布多篇笔记，称葆格荟BG瓷砖质量差、平整度不合格并号召避雷，侵害原告名誉权', pdfFile:'20260227(收）佛山市葆格荟供应链管理有限公司 笔记侵权（人格权）-【晨博】-一审胜诉-（2025）粤0604民初19295号.pdf', pdfUrl: null},
+  {id:90, date:'2026.03.12', plaintiff:'柳州市繁雯装饰设计有限公司', caseNo:'（2025）桂0202民初4755号', court:'柳州城中法院', judge:'唐婧', result:'win1', claim:'3,000元', keywords:'名誉权', summary:'行吟无需承担相应责任，原告诉请缺乏事实和法律依据，不予支持', category:'personality-rights', subcat:'行吟免责（有说理）', xingyinRole:'被告', infType:'名誉权', infSummary:'李漓墨、黄莉惠在小红书发布避雷帖文及评论，称繁雯公司损坏木地板拒赔，侵害原告名誉权', pdfFile:'20260312（收）柳州市繁雯装饰设计有限公司 笔记侵权（人格权）-【寅杰】-一审胜诉-（2025）桂0202民初4755号.pdf', pdfUrl: null},
+  {id:91, date:'2026.03.17', plaintiff:'林伯衡', caseNo:'(2025)粤0491民初3355号', court:'横琴合作区法院', judge:'佘琼圣', result:'win1', claim:'441,788元', keywords:'名誉权+肖像权', summary:'原告当庭撤回对行吟诉请，法院未就行吟责任作出裁判', category:'personality-rights', subcat:'行吟免责（有说理）', xingyinRole:'被告', infType:'名誉权+肖像权', infSummary:'刘晓徽在小红书盗用林伯衡头像并发布侮辱诽谤内容，侵害原告肖像权及名誉权', pdfFile:'20260317（收）林伯衡 笔记侵权（人格权） -【晨博】-一审胜诉-(2025)粤0491民初3355号.pdf', pdfUrl: null},
+  {id:92, date:'2026.03.18', plaintiff:'阴瑛', caseNo:'（2025）沪0101民初31027号', court:'上海黄浦法院', judge:'俞叔涛', result:'win1', claim:'30,000元', keywords:'名誉权', summary:'行吟举报后对笔记及评论进行了处理，尽合理管理义务，要求承担连带责任依据不足', category:'personality-rights', subcat:'行吟免责（有说理）', xingyinRole:'被告', infType:'名誉权', infSummary:'童雯倩在小红书发布含阴瑛照片的笔记，暗示其私联迪士尼演员并引发人肉，侵害名誉权', pdfFile:'20260318（收）阴瑛 笔记侵权（人格权）-【寅杰】-一审胜诉-（2025）沪0101民初31027号.pdf', pdfUrl: null},
+  {id:93, date:'2026.03.20', plaintiff:'上海谨语健康科技有限公司', caseNo:'(2025)沪02民终2168号', court:'上海二中院', judge:'陈子雨', result:'win2', claim:'10,000元', keywords:'名誉权', summary:'原告要求行吟承担连带责任，缺乏事实和法律依据，不予支持', category:'personality-rights', subcat:'行吟免责（有说理）', xingyinRole:'被告', infType:'名誉权', infSummary:'高冬炜在小红书发布内容侵害谨语公司名誉权', pdfFile:'20260320（收）上海谨语健康科技有限公司 笔记侵权（人格权）-【古力】-二审胜诉-沪02民终2168号.pdf', pdfUrl: null},
+  {id:94, date:'2026.03.20', plaintiff:'福州倍星达文化传媒有限公司', caseNo:'(2025)闽0104民初285号', court:'福州仓山法院', judge:'何志涛', result:'win1', claim:'20,000元', keywords:'名誉权', summary:'行吟无侵权故意，未实施侵权行为，及时删除帖子，不构成侵权，不承担责任', category:'personality-rights', subcat:'行吟免责（有说理）', xingyinRole:'被告', infType:'名誉权', infSummary:'张严承在小红书发布帖子，称倍星达公司不按时发工资、不给离职证明等，侵害倍星达公司名誉权', pdfFile:'20260320（收）福州倍星达文化传媒有限公司 笔记侵权（人格权）-【寅杰】-一审胜诉-闽0104民初285号.pdf', pdfUrl: null},
+  {id:95, date:'2026.03.20', plaintiff:'纪淑伟', caseNo:'（2025）川1102民初8940号', court:'乐山中区法院', judge:'刘惠', result:'win1', claim:'5,000元', keywords:'名誉权+隐私权', summary:'行吟接到投诉后当天下架涉案笔记，原告未举证证明行吟未及时采取必要措施导致损害扩大，对该项主张不予支持', category:'personality-rights', subcat:'行吟免责（有说理）', xingyinRole:'被告', infType:'名誉权+隐私权', infSummary:'胥歆羽在小红书发布多篇笔记，称纪某伟隐瞒已婚已育身份欺骗多名女性，侵害纪淑伟名誉权', pdfFile:'20260320（收）纪淑伟 笔记侵权（人格权）-【寅杰】-一审胜诉-川1102民初8940号.pdf', pdfUrl: null},
+  {id:96, date:'2026.03.20', plaintiff:'郑州通信科技中等专业学校', caseNo:'（2025）豫0191民初28458号', court:'郑州高新区法院', judge:'王建超', result:'win1', claim:'50,000元', keywords:'名誉权', summary:'行吟收到律师函后及时删除侵权内容，已采取必要措施，不承担侵权责任', category:'personality-rights', subcat:'行吟免责（有说理）', xingyinRole:'被告', infType:'名誉权', infSummary:'刘松涛在小红书发布多篇笔记，虚假曝光郑州通信科技中专存在安全隐患、教学质量差等问题，侵害该校名誉权', pdfFile:'20260320（收）郑州通信科技中等专业学校 笔记侵权（人格权）-【寅杰】-一审胜诉-豫0191民初28458号.pdf', pdfUrl: null},
+  {id:97, date:'2026.03.26', plaintiff:'浙江建人专修学院', caseNo:'(2025)浙0192民初10233号', court:'杭州互联网法院', judge:'米超锋/韩昱/吴玉琴', result:'win2', claim:'500,000元', keywords:'名誉权', summary:'原告未向行吟发有效通知，用户自行设私密，行吟知晓后屏蔽文章，不构成侵权', category:'personality-rights', subcat:'行吟免责（有说理）', xingyinRole:'被告', infType:'名誉权', infSummary:'邵立群以学生口吻在小红书发布两篇文章，称建人学院欺骗学生、管理混乱，侵害建人学院名誉权', pdfFile:'20260326（收）浙江建人专修学院 笔记侵权（人格权）-【晨博】-二审胜诉-(2025)浙0192民初10233号、(2025)浙01民终16089号.pdf', pdfUrl: null},
+  {id:98, date:'2026.03.30', plaintiff:'孔斌', caseNo:'(2025)苏0505民初13093号', court:'苏州虎丘法院', judge:'吴宏', result:'win1', claim:'5,600元', keywords:'名誉权+隐私权', summary:'及时下架涉案笔记并发送警示通知，已履行通知-删除法定义务；普通账号仅需手机号认证，已按规定处理，无需进一步披露用户信息；驳回原告全部诉请', category:'personality-rights', subcat:'行吟免责（有说理）', xingyinRole:'被告', infType:'名誉权+隐私权', infSummary:'小红书用户发布含原告孔斌姓名、身份证号、住址等个人信息的笔记，侵害其个人信息权益', pdfFile:'20260330（收）孔斌 笔记侵权（人格权）-【古力】-一审胜诉-(2025)苏0505民初13093号.pdf', pdfUrl: null},
+  {id:99, date:'2026.03.31', plaintiff:'杭州融鹏教育科技有限公司', caseNo:'（2025）沪0101民初34288号', court:'上海黄浦法院', judge:'高才', result:'win1', claim:'8,000元', keywords:'名誉权', summary:'行吟收到原告举报后及时处理相关笔记，已尽法定义务，无须承担连带责任', category:'personality-rights', subcat:'行吟免责（有说理）', xingyinRole:'被告', infType:'名誉权', infSummary:'前员工斯琴毕力格在小红书发布笔记，就劳资纠纷对原告进行不实陈述，侵害杭州融鹏教育科技有限公司名誉权等人格权', pdfFile:'20260331（收）杭州融鹏教育科技有限公司 笔记侵权（人格权）-【雅鑫】-一审胜诉-（2025）沪0101民初34288号.pdf', pdfUrl: null},
+  {id:100, date:'2026.03.31', plaintiff:'云南喵娘商贸有限公司', caseNo:'（2025）沪0101民初11544号', court:'上海黄浦法院', judge:'高才', result:'win1', claim:'30,000元', keywords:'名誉权', summary:'行吟收到原告举报后及时处理相关不当笔记，已尽法定义务，无须承担连带责任', category:'personality-rights', subcat:'行吟免责（有说理）', xingyinRole:'被告', infType:'名誉权', infSummary:'林倩华在小红书多次发布笔记，指称喵娘精工抄袭、质量低劣、骂客户，侵害原告云南喵娘商贸有限公司名誉权', pdfFile:'20260331（收）云南喵娘商贸有限公司 网络侵权-【雅鑫】-一审胜诉-（2025）沪0101民初11544号.pdf', pdfUrl: null},
+  {id:101, date:'2025.10.21', plaintiff:'清远市清城区汇哥牛杂小食店', caseNo:'(2025)粤1802民初4961号', court:'清远清城法院', judge:'朱文卉', result:'win1', claim:'38,400元', keywords:'名誉权', summary:'—', category:'personality-rights', subcat:'行吟免责（无专门说理）', xingyinRole:'被告', infType:'名誉权', infSummary:'林晓燕、赖卓成在小红书发布视频和笔记，称汇哥牛杂小食店为黑店且价格欺诈，侵害原告名誉权', pdfFile:'20251021（收）清远市清城区汇哥牛杂小食店 笔记侵权（人格权）-【古力】-一审胜诉-(2025)粤1802民初4961号.pdf', pdfUrl: null},
+  {id:102, date:'2025.10.31', plaintiff:'深圳市千古一递国际物流有限公司', caseNo:'（2025）粤03民终37041号', court:'广州中院', judge:'沈博/李慧/杜炬东', result:'win2', claim:'5,000元', keywords:'名誉权', summary:'—', category:'personality-rights', subcat:'行吟免责（无专门说理）', xingyinRole:'被告', infType:'名誉权', infSummary:'千古一递公司员工在小红书以"走私货物混装"等不实表述发帖，误导公众认为天星公司从事违禁走私，侵害天星公司名誉权', pdfFile:'20251031（收）深圳市千古一递国际物流有限公司 笔记侵权（人格权）案  判决书【雅鑫】-二审胜诉-（2025）粤 03民终 37041 号.pdf', pdfUrl: null},
+  {id:103, date:'2025.12.12', plaintiff:'盛佳辰', caseNo:'（2025）苏05民终12748号', court:'苏州中院', judge:'周红/张俊红/赵俊', result:'win2', claim:'2,000元', keywords:'名誉权+隐私权', summary:'—', category:'personality-rights', subcat:'行吟免责（无专门说理）', xingyinRole:'被告', infType:'名誉权+隐私权', infSummary:'杨雯婷、杨喜明在小红书发布笔记，称盛佳辰占便宜为老赖，并披露其姓名、小区等隐私信息，侵害盛佳辰名誉权及隐私权', pdfFile:'20251212（收）杨雯婷 笔记侵权（人格权）-【晨博】-二审胜诉-（2025）苏05民终12748号.pdf', pdfUrl: null},
+  {id:104, date:'2025.12.22', plaintiff:'浙江建人专修学院', caseNo:'（2025）浙01民终11985号', court:'杭州中院', judge:'孔文超/韦薇/周志军', result:'win2', claim:'500,000元', keywords:'名誉权', summary:'—', category:'personality-rights', subcat:'行吟免责（无专门说理）', xingyinRole:'被告', infType:'名誉权', infSummary:'陈飘飘以泰来学校账号在小红书发布案涉文章，侵害浙江建人专修学院名誉权（人格权）', pdfFile:'20251222（收）浙江建人专修学院 笔记侵权（人格权）-【雅鑫】-二审胜诉-（2025）浙01民终11985号.pdf', pdfUrl: null},
+  {id:105, date:'2026.01.07', plaintiff:'浙江建人专修学院', caseNo:'（2025）浙01民终13237号', court:'杭州中院', judge:'翟羽佳/周志军/米超锋', result:'win2', claim:'500,000元', keywords:'名誉权', summary:'—', category:'personality-rights', subcat:'行吟免责（无专门说理）', xingyinRole:'被告', infType:'名誉权', infSummary:'新塔夫公司账号在小红书发布文章，围绕建人学院师资、管理、费用等发表负面言论，造成其社会评价降低，侵害浙江建人专修学院名誉权', pdfFile:'20260107（收）浙江建人专修学院 笔记侵权（人格权）-【雅鑫】-二审胜诉-（2025）浙01民终13237号.pdf', pdfUrl: null},
+  {id:106, date:'2026.01.28', plaintiff:'陶雨涛', caseNo:'（2025）沪02民终14286号', court:'上海二中院', judge:'唐墨华/李清梅/彭丽颖', result:'win2', claim:'30,000元', keywords:'名誉权', summary:'—', category:'personality-rights', subcat:'行吟免责（无专门说理）', xingyinRole:'被告', infType:'名誉权', infSummary:'邓露（一审被告）在小红书发布笔记及评论，内容可特定化指向陶雨涛，散布不实言论致其社会评价降低，侵害陶雨涛名誉权（二审维持）', pdfFile:'20260128(收）陶⾬涛  笔记侵权（人格权）-【古力】-二审胜诉-（2025）沪02民终14286号.pdf', pdfUrl: null},
+  {id:107, date:'2026.02.03', plaintiff:'潘柳羽', caseNo:'（2025）沪0105民初26061号', court:'上海长宁法院', judge:'汪露', result:'win1', claim:'5,000元', keywords:'名誉权', summary:'—', category:'personality-rights', subcat:'行吟免责（无专门说理）', xingyinRole:'被告', infType:'名誉权', infSummary:'被告白从珍在小红书发布评论，捏造原告潘柳羽致人溺亡后逃回国内并晒美食的不实内容，侵害原告名誉权', pdfFile:'20260203（收）潘柳羽 笔记侵权（人格权）-【寅杰】-一审胜诉-（2025）沪0105民初26061号.pdf', pdfUrl: null},
+  {id:108, date:'2026.02.06', plaintiff:'郑小杰', caseNo:'（2025）沪0101民初29798号', court:'上海黄浦法院', judge:'汤峥鸣', result:'win1', claim:'25,000元', keywords:'名誉权+肖像权', summary:'—', category:'personality-rights', subcat:'行吟免责（无专门说理）', xingyinRole:'被告', infType:'名誉权+肖像权', infSummary:'时光影工作室在小红书发布视频笔记，擅自使用原告郑小杰肖像，侵害原告肖像权', pdfFile:'20260206（收）郑小杰 笔记侵权（人格权）-【古力】-一审胜诉-（2025）沪0101民初29798号.pdf', pdfUrl: null},
+  {id:109, date:'2026.02.10', plaintiff:'江柏霖', caseNo:'（2025）浙01民终15571号', court:'杭州中院', judge:'米超锋/韩昱/吴玉琴', result:'win2', claim:'200,000元', keywords:'名誉权', summary:'—', category:'personality-rights', subcat:'行吟免责（无专门说理）', xingyinRole:'被告', infType:'名誉权', infSummary:'普乐森公司账号在小红书发布多篇文章侵害江柏霖名誉权（二审认定发布主体存疑，不予支持上诉，维持原判）', pdfFile:'20260210（收）江柏霖 笔记侵权（人格权）-【雅鑫】-二审胜诉-（2025）浙01民终15571号.pdf', pdfUrl: null},
+  {id:110, date:'2026.03.02', plaintiff:'李菁', caseNo:'（2025）沪0110民初19869号', court:'上海杨浦法院', judge:'刘星', result:'win1', claim:'40,000元', keywords:'名誉权+隐私权', summary:'—', category:'personality-rights', subcat:'行吟免责（无专门说理）', xingyinRole:'被告', infType:'名誉权+隐私权', infSummary:'小红书用户Momo发布分手笔记，暗指原告李菁为前男友出轨对象并披露相关隐私信息，侵害原告名誉权及隐私权', pdfFile:'20260302（收）李菁 笔记侵权（人格权）-【晨博】-一审胜诉-（2025）沪0110民初19869号.pdf', pdfUrl: null},
+  {id:111, date:'2026.03.30', plaintiff:'杨亚运', caseNo:'（2026）辽0211民初494号', court:'大连甘井子法院', judge:'董允瑞', result:'win1', claim:'10,000元', keywords:'名誉权', summary:'—', category:'personality-rights', subcat:'行吟免责（无专门说理）', xingyinRole:'被告', infType:'名誉权', infSummary:'杨文辉在小红书发布原告打码身份证照片及诽谤性文字，侵害原告名誉权', pdfFile:'20260330（收）杨亚运 笔记侵权（人格权）-【雅鑫】-一审胜诉-（2026）辽0211民初494号.pdf', pdfUrl: null},
+  {id:112, date:'2026.01.22', plaintiff:'黄新泉', caseNo:'（2025）湘0104民初41060号', court:'长沙岳麓法院', judge:'郭庆栋', result:'lose1', claim:'6,000元', keywords:'名誉权、隐私权', summary:'原告投诉后未及时采取删除等必要措施，导致笔记流传时间较长，扩大侵害', category:'personality-rights', subcat:'行吟被判承担责任', xingyinRole:'被告', infType:'名誉权、隐私权', infSummary:'多名小红书用户（昵称"山川唱晚""公子临沭"等共6个账号）发布涉"黄姓男教师"笔记，内容可特定化为黄新泉，侵害其名誉权及隐私权', pdfFile:'20260122（收）黄新泉 笔记侵权（人格权）-【晨博】-一审败诉-（2025）湘0104民初41060号.pdf', pdfUrl: null},
+  {id:113, date:'2025.11.10', plaintiff:'哈尔滨南岗艾庭教育培训学校', caseNo:'（2025）黑0103民初18428号', court:'哈尔滨南岗法院', judge:'李丹丹', result:'lose1', claim:'15,000元', keywords:'名誉权', summary:'公司联系要求删除，拒绝下架；律师函发出后仍未处置；法院认定未尽事后管理义务', category:'personality-rights', subcat:'行吟被判承担责任', xingyinRole:'被告', infType:'名誉权', infSummary:'用户"萌混过关"在小红书发布避雷文章，称艾庭教育招聘均为无薪试用岗，内容虚假，侵害原告名誉权', pdfFile:'20251110（收）哈尔滨市南岗区艾庭教育培训学校有限公司 笔记侵权（人格权）-【寅杰】-一审败诉-（2025）黑0103民初18428号.pdf', pdfUrl: null},
+  {id:114, date:'2025.10.16', plaintiff:'东莞市莞城橄榄树面包、刘航宇', caseNo:'（2025）粤1971民初27556号', court:'东莞第一法院', judge:'成瑶', result:'win1', claim:'—', keywords:'名誉权', summary:'行吟以第三人参与不承担责任', category:'personality-rights', subcat:'行吟为第三人', xingyinRole:'第三人', infType:'名誉权', infSummary:'刘伟在小红书发布笔记称前雇主拖欠工资、斥其为极品，并使用橄榄树面包店照片，侵害两原告名誉权', pdfFile:'20251016（收）东莞市莞城橄榄树面包、刘航宇 笔记侵权（人格权）案 判决书【古力】-一审胜诉-（2025）粤 1971 民初 27556 号.pdf', pdfUrl: null},
+  {id:115, date:'2025.10.22', plaintiff:'熊伟', caseNo:'（2025）沪0101民初4633号', court:'上海黄浦法院', judge:'周红林', result:'win1', claim:'—', keywords:'名誉权', summary:'行吟以第三人参与不承担责任', category:'personality-rights', subcat:'行吟为第三人', xingyinRole:'第三人', infType:'名誉权', infSummary:'被告缪涛涛在小红书发布17篇含贬损言论的笔记，侵害原告熊伟名誉权', pdfFile:'20251022（收）熊伟 笔记侵权（人格权）-【晨博】-一审胜诉- （2025）沪0101民初4633号.pdf', pdfUrl: null},
+  {id:116, date:'2025.11.13', plaintiff:'迟萍萍', caseNo:'（2025）川1102民初6758号', court:'乐山中区法院', judge:'叶全春', result:'win1', claim:'—', keywords:'名誉权', summary:'—', category:'personality-rights', subcat:'行吟为第三人', xingyinRole:'第三人', infType:'名誉权', infSummary:'被告在小红书发帖称原告婚庆公司无道德、辱骂客户、诅咒新人，侵害原告名誉权及商誉', pdfFile:'20251113（收）迟萍萍 笔记侵权（人格权）-【雅鑫】-胜诉-（2025）川 1102 民初 6758 号.pdf', pdfUrl: null},
+  {id:117, date:'2025.12.31', plaintiff:'刘棵', caseNo:'(2025)豫1522民初6018号', court:'河南光山法院', judge:'夏惠凤', result:'win1', claim:'—', keywords:'名誉权', summary:'行吟以第三人参与不承担责任', category:'personality-rights', subcat:'行吟为第三人', xingyinRole:'第三人', infType:'名誉权', infSummary:'被告魏一萃在小红书发布涉及退货退款纠纷的贴文，侵害原告刘棵名誉权', pdfFile:'20251231（收）刘棵 笔记侵权（人格权）-【晨博】-一审胜诉-(2025)豫1522民初6018号.pdf', pdfUrl: null},
+  {id:118, date:'2026.01.14', plaintiff:'辽宁辽阳渤旺宠物饲料有限公司', caseNo:'（2025）辽0104民初4969号', court:'辽阳白塔法院', judge:'于果', result:'win1', claim:'—', keywords:'名誉权+隐私权', summary:'行吟以第三人参与不承担责任', category:'personality-rights', subcat:'行吟为第三人', xingyinRole:'第三人', infType:'名誉权+隐私权', infSummary:'被告在小红书发布笔记称渤旺宠物不靠谱、拖延工期、不要坑小狗等，侵害原告名誉权', pdfFile:'20260114（收）辽宁辽阳渤旺宠物饲料有限公司 笔记侵权（人格权）-【晨博】-一审胜诉-（2025）辽0104民初4969号.pdf', pdfUrl: null},
+  {id:119, date:'2026.03.31', plaintiff:'云南天王星科技有限公司', caseNo:'（2026）云01民终247号', court:'昆明中院', judge:'李玉仙/龚庆/汪丹丹', result:'win2', claim:'—', keywords:'名誉权', summary:'行吟以第三人参与不承担责任', category:'personality-rights', subcat:'行吟为第三人', xingyinRole:'第三人', infType:'名誉权', infSummary:'姜妤蒨在小红书发布婚礼策划服务差评笔记，内容可指向天王星公司，侵害原告名誉权', pdfFile:'20260331（收）云南天王星科技有限公司 笔记侵权（人格权）-【雅鑫】-二审胜诉-（2026）云01民终247号.pdf', pdfUrl: null}
+];
+CATEGORIES.forEach(c => { c.count = DATA.filter(d => d && d.category === c.id).length; });
+
+// Precompute courts - skip since court is now explicit
+// DATA.forEach(d => { d.court = inferCourt(d.caseNo); });
+
+// ============================================================
+// STATE
+// ============================================================
+let state = {
+  activeTab: 'user-ban',
+  globalQuery: '',
+  judgeFilter: null,
+  courtFilter: null,
+  dateFilter: null,  // 'YYYY.MM'
+  resultFilter: null, // 'lose'|null
+  tableSorts: {}, // catId -> {col, dir}
+  tableQueries: {}, // catId -> string
+  judgePanelOpen: false,
+  sidebarSections: { date: false, court: false, judge: false }, // true=展开
+  sidebarCourtRegions: {}, // region -> bool (true=展开)
+  sidebarJudgeRegions: {}, // region -> bool
+  sidebarJudgeCourts: {},  // region+'||'+court -> bool
+};
+
+// ============================================================
+// HELPERS
+// ============================================================
+function getResultLabel(r) { return RESULT_LABELS[r] || r; }
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function highlight(text, query) {
+  if (!query) return escHtml(text);
+  const escaped = escHtml(text);
+  const re = new RegExp('(' + query.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + ')', 'gi');
+  return escaped.replace(re, '<mark>$1</mark>');
+}
+
+// 法院→省级地域映射
+const COURT_REGION = {
+  '上海黄浦法院':'上海','上海二中院':'上海','上海高院':'上海',
+  '上海静安法院':'上海','上海闵行法院':'上海','上海杨浦法院':'上海','上海长宁法院':'上海',
+  '北京互联网法院':'北京','北京大兴法院':'北京','北京通州法院':'北京',
+  '广州互联网法院':'广东','广州中院':'广东','广东深圳互联网法院':'广东',
+  '佛山禅城法院':'广东','佛山南海法院':'广东','佛山顺德法院':'广东',
+  '东莞第一法院':'广东','清远清城法院':'广东','肇庆高要法院':'广东',
+  '杭州互联网法院':'浙江','杭州中院':'浙江','绍兴越城法院':'浙江',
+  '苏州虎丘法院':'江苏','苏州吴中法院':'江苏','苏州中院':'江苏',
+  '南京建邺法院':'江苏','宿迁宿豫法院':'江苏',
+  '重庆五中院':'重庆','重庆九龙坡法院':'重庆',
+  '沈阳沈河法院':'辽宁','沈阳浑南法院':'辽宁','沈阳中院':'辽宁',
+  '辽阳白塔法院':'辽宁','本溪平山法院':'辽宁','大连甘井子法院':'辽宁',
+  '哈尔滨南岗法院':'黑龙江',
+  '郑州中院':'河南','郑州高新区法院':'河南','河南光山法院':'河南',
+  '长春新区法院':'吉林',
+  '长沙岳麓法院':'湖南',
+  '济南槐荫法院':'山东',
+  '成都铁路一院':'四川','四川越西法院':'四川','乐山中区法院':'四川',
+  '西安灞桥法院':'陕西',
+  '昆明西山法院':'云南','昆明中院':'云南','云南高院':'云南',
+  '海口美兰法院':'海南',
+  '金华中院':'浙江',
+  '福州仓山法院':'福建','福州晋安法院':'福建',
+  '柳州城中法院':'广西','广西蒙山法院':'广西',
+  '常州武进法院':'江苏',
+  '横琴合作区法院':'广东',
+};
+// 法院层级判断
+function courtLevel(c) {
+  if (/高院/.test(c)) return 0;
+  if (/中院/.test(c)) return 1;
+  return 2;
+}
+function buildJudgeStats() {
+  // 返回 { region: { court: [{judge,count}] } }
+  const courtJudgeMap = {};
+  DATA.forEach(d => {
+    if (!d) return;
+    d.judge.split('/').forEach(j => {
+      j = j.trim();
+      if (!j || j === '—' || j === '-' || j.length < 2) return;
+      const key = d.court + '||' + j;
+      if (!courtJudgeMap[key]) courtJudgeMap[key] = {court: d.court, judge: j, count: 0};
+      courtJudgeMap[key].count++;
+    });
+  });
+  // 按地域分组
+  const regionMap = {};
+  Object.values(courtJudgeMap).forEach(({court, judge, count}) => {
+    const region = COURT_REGION[court] || '其他';
+    if (!regionMap[region]) regionMap[region] = {};
+    if (!regionMap[region][court]) regionMap[region][court] = [];
+    regionMap[region][court].push({judge, count});
+  });
+  return regionMap;
+}
+
+function getFilteredData(catId) {
+  let rows = DATA.filter(d => d.category === catId);
+  const q = (state.tableQueries[catId] || '').trim().toLowerCase();
+  const gq = state.globalQuery.trim().toLowerCase();
+  const jf = state.judgeFilter;
+  const cf = state.courtFilter;
+  const df = state.dateFilter;
+
+  if (jf) rows = rows.filter(d => d.judge.includes(jf));
+  if (cf) rows = rows.filter(d => d.court === cf);
+  if (df) rows = rows.filter(d => d.date && d.date.startsWith(df));
+  if (state.resultFilter === 'lose') rows = rows.filter(d => d.result === 'lose' || d.result === 'lose1');
+  if (state.resultFilter === 'win1') rows = rows.filter(d => d.result === 'win1');
+  if (state.resultFilter === 'win2') rows = rows.filter(d => d.result === 'win2');
+  if (state.resultFilter === 'winRetry') rows = rows.filter(d => d.result === 'winRetry');
+  if (state.resultFilter === 'procedural') rows = rows.filter(d => d.result === 'procedural');
+  if (gq) {
+    rows = rows.filter(d =>
+      d.plaintiff.toLowerCase().includes(gq) ||
+      d.caseNo.toLowerCase().includes(gq) ||
+      d.judge.toLowerCase().includes(gq) ||
+      d.keywords.toLowerCase().includes(gq) ||
+      d.summary.toLowerCase().includes(gq)
+    );
+  }
+  if (q) {
+    rows = rows.filter(d =>
+      d.plaintiff.toLowerCase().includes(q) ||
+      d.caseNo.toLowerCase().includes(q) ||
+      d.judge.toLowerCase().includes(q) ||
+      d.keywords.toLowerCase().includes(q) ||
+      d.summary.toLowerCase().includes(q) ||
+      d.date.includes(q)
+    );
+  }
+
+  const sort = state.tableSorts[catId];
+  if (sort) {
+    rows = [...rows].sort((a,b) => {
+      let av = a[sort.col], bv = b[sort.col];
+      if (typeof av === 'string') av = av.toLowerCase();
+      if (typeof bv === 'string') bv = bv.toLowerCase();
+      if (av < bv) return sort.dir === 'asc' ? -1 : 1;
+      if (av > bv) return sort.dir === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }
+  return rows;
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+function renderStats() {
+  const total = DATA.length;
+  const win1 = DATA.filter(d=>d.result==='win1').length;
+  const win2 = DATA.filter(d=>d.result==='win2').length;
+  const winRetry = DATA.filter(d=>d.result==='winRetry').length;
+  const lose = DATA.filter(d=>d.result==='lose'||d.result==='lose1').length;
+  const proc = DATA.filter(d=>d.result==='procedural').length;
+  const cats = CATEGORIES.map(c => `<div class="stat-card"><div class="num">${DATA.filter(d=>d.category===c.id).length}</div><div class="label">${c.label.replace('纠纷','')}</div></div>`).join('');
+
+  const rf = state.resultFilter;
+  function sc(key, cls, num, label) {
+    const active = rf === key;
+    return `<div class="stat-card ${cls}${active?' highlight':''}" onclick="toggleResultFilter('${key}')" style="cursor:pointer" title="点击筛选${label}"><div class="num">${num}</div><div class="label">${label}${active?' ✕':''}</div></div>`;
+  }
+  document.getElementById('statsBar').innerHTML = `
+    <div class="stat-card highlight stat-total"><div class="num">${total}</div><div class="label">总案件数</div></div>
+    ${sc('win1','stat-win',win1,'一审胜诉')}
+    ${sc('win2','stat-win',win2,'二审胜诉')}
+    ${sc('winRetry','stat-win',winRetry,'再审胜诉')}
+    ${sc('lose','stat-lose',lose,'败诉')}
+    ${sc('procedural','stat-proc',proc,'程序性')}
+    <div style="flex:1;min-width:8px"></div>
+    ${cats}
+  `;
+}
+
+function renderNavTabs() {
+  document.getElementById('navTabs').innerHTML = CATEGORIES.map(c => `
+    <button class="nav-tab ${state.activeTab===c.id?'active':''}" onclick="switchTab('${c.id}')">
+      <span class="tab-label">${c.label}</span>
+      <span class="badge">${c.count}</span>
+    </button>
+  `).join('');
+}
+
+// ── SIDEBAR RENDER ──
+function renderSidebar() {
+  const el = document.getElementById('sidebarBody');
+  if (!el) return;
+
+  // 计算各维度的案件数（基于当前已有的另外两个filter）
+  function countWith(extra) {
+    return DATA.filter(d => {
+      if (!d) return false;
+      if (extra.judge && !d.judge.includes(extra.judge)) return false;
+      if (extra.court && d.court !== extra.court) return false;
+      if (extra.date && !(d.date && d.date.startsWith(extra.date))) return false;
+      return true;
+    }).length;
+  }
+
+  // ── 时间 ──
+  const dateMap = {};
+  DATA.forEach(d => { if (!d || !d.date) return; const m = d.date.slice(0,7); dateMap[m] = (dateMap[m]||0)+1; });
+  const DATE_LABELS = {'2025.03':'2025年3月','2025.06':'2025年6月','2025.10':'2025年10月','2025.11':'2025年11月','2025.12':'2025年12月','2026.01':'2026年1月','2026.02':'2026年2月','2026.03':'2026年3月'};
+  const dateOpen = state.sidebarSections.date;
+  const dateHtml = `<div class="filter-section">
+    <div class="filter-section-header" onclick="toggleSidebarSection('date')">
+      <span class="fsh-title"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> 时间维度</span>
+      <span class="filter-section-chevron ${dateOpen?'':'collapsed'}">▾</span>
+    </div>
+    ${dateOpen ? `<div class="filter-section-body">
+      ${Object.keys(dateMap).sort().map(m => {
+        const cnt = countWith({date:m, judge:state.judgeFilter, court:state.courtFilter});
+        return `<div class="filter-item${state.dateFilter===m?' active':''}" onclick="filterByDate('${m}')">
+          <span class="fi-label">${DATE_LABELS[m]||m}</span><span class="fi-cnt">${cnt}</span>
+        </div>`;
+      }).join('')}
+    </div>` : ''}
+  </div>`;
+
+  // ── 法院（按地域分组） ──
+  const courtMap = {};
+  DATA.forEach(d => { if (!d) return; courtMap[d.court] = (courtMap[d.court]||0)+1; });
+  const REGION_ORDER = ['上海','北京','广东','浙江','江苏','重庆','辽宁','黑龙江','河南','湖南','山东','四川','陕西','云南','吉林','海南','福建','广西','其他'];
+  const regionCourts = {};
+  Object.keys(courtMap).forEach(c => {
+    const r = COURT_REGION[c] || '其他';
+    if (!regionCourts[r]) regionCourts[r] = [];
+    regionCourts[r].push(c);
+  });
+  const courtOpen = state.sidebarSections.court;
+  const courtHtml = `<div class="filter-section">
+    <div class="filter-section-header" onclick="toggleSidebarSection('court')">
+      <span class="fsh-title"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 10v11M12 10v11M16 10v11"/></svg> 法院维度</span>
+      <span class="filter-section-chevron ${courtOpen?'':'collapsed'}">▾</span>
+    </div>
+    ${courtOpen ? `<div class="filter-section-body">
+      ${REGION_ORDER.filter(r => regionCourts[r]).map(r => {
+        const rOpen = state.sidebarCourtRegions[r] === true;
+        const courts = regionCourts[r].sort((a,b) => courtLevel(a)-courtLevel(b) || a.localeCompare(b,'zh'));
+        const totalCnt = courts.reduce((s,c) => s + countWith({court:c, judge:state.judgeFilter, date:state.dateFilter}), 0);
+        return `<div onclick="toggleCourtRegion('${escHtml(r)}')" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;user-select:none;padding:6px 4px 6px 4px;margin:6px 0 2px 0;font-size:12px;font-weight:400;color:var(--text-muted);background:var(--surface-alt);border-radius:4px;">
+          <span>${r}</span><span style="font-size:10px;color:var(--text-light);">${rOpen?'▾':'▸'} ${totalCnt}</span>
+        </div>`
+          + (rOpen ? courts.map(c => {
+              const cnt = countWith({court:c, judge:state.judgeFilter, date:state.dateFilter});
+              return `<div class="filter-item${state.courtFilter===c?' active':''}" onclick="filterByCourt('${escHtml(c)}')">
+                <span class="fi-label">${escHtml(c)}</span><span class="fi-cnt">${cnt}</span>
+              </div>`;
+            }).join('') : '');
+      }).join('')}
+    </div>` : ''}
+  </div>`;
+
+  // ── 法官（按地域/法院分组） ──
+  const regionMap = buildJudgeStats();
+  const regions = Object.keys(regionMap).sort((a,b) => {
+    const ai = REGION_ORDER.indexOf(a), bi = REGION_ORDER.indexOf(b);
+    if (ai>=0 && bi>=0) return ai-bi;
+    if (ai>=0) return -1; if (bi>=0) return 1;
+    return a.localeCompare(b,'zh');
+  });
+  const judgeOpen = state.sidebarSections.judge;
+  const judgeHtml = `<div class="filter-section">
+    <div class="filter-section-header" onclick="toggleSidebarSection('judge')">
+      <span class="fsh-title"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> 法官维度</span>
+      <span class="filter-section-chevron ${judgeOpen?'':'collapsed'}">▾</span>
+    </div>
+    ${judgeOpen ? `<div class="filter-section-body">
+      ${regions.map(region => {
+        const rOpen = state.sidebarJudgeRegions[region] === true;
+        const courts = Object.keys(regionMap[region]).sort((a,b) => courtLevel(a)-courtLevel(b) || a.localeCompare(b,'zh'));
+        const rTotal = courts.reduce((s,court) => s + regionMap[region][court].reduce((ss,{judge}) => ss + countWith({judge, court:state.courtFilter, date:state.dateFilter}),0),0);
+        return `<div onclick="toggleJudgeRegion('${escHtml(region)}')" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;user-select:none;padding:6px 4px 6px 4px;margin:6px 0 2px 0;font-size:12px;font-weight:400;color:var(--text-muted);background:var(--surface-alt);border-radius:4px;">
+          <span>${region}</span><span style="font-size:10px;color:var(--text-light);">${rOpen?'▾':'▸'} ${rTotal}</span>
+        </div>`
+          + (rOpen ? courts.map(court => {
+              const cKey = region+'||'+court;
+              const cOpen = state.sidebarJudgeCourts[cKey] === true;
+              const judges = regionMap[region][court].sort((a,b) => b.count-a.count);
+              const cTotal = judges.reduce(({judge:j}={judge:''}) => 0, 0) || judges.reduce((s,{judge:j}) => s + countWith({judge:j, court:state.courtFilter, date:state.dateFilter}),0);
+              return `<div style="padding:5px 4px 5px 12px;font-size:12px;font-weight:400;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;justify-content:space-between;user-select:none;" onclick="event.stopPropagation();toggleJudgeCourt('${escHtml(cKey)}')">
+                <span>${escHtml(court)}</span><span style="font-size:10px;color:var(--text-light);">${cOpen?'▾':'▸'} ${cTotal}</span>
+              </div>`
+                + (cOpen ? judges.map(({judge}) => {
+                    const cnt = countWith({judge, court:state.courtFilter, date:state.dateFilter});
+                    const hasProfile = !!JUDGE_PROFILES[judge];
+                    return `<div class="filter-item${state.judgeFilter===judge?' active':''}" onclick="filterByJudge('${escHtml(judge)}')" title="${escHtml(court)}" style="padding-left:20px;">
+                      <span class="fi-label">${escHtml(judge)}${hasProfile ? `<span class="judge-profile-icon" onclick="event.stopPropagation();showJudgeProfile('${escHtml(judge)}')" title="查看法官档案">i</span>` : ''}</span><span class="fi-cnt">${cnt}</span>
+                    </div>`;
+                  }).join('') : '');
+            }).join('') : '');
+      }).join('')}
+    </div>` : ''}
+  </div>`;
+
+  el.innerHTML = dateHtml + courtHtml + judgeHtml;
+
+  // 清除全部按钮
+  const hasFilter = state.judgeFilter || state.courtFilter || state.dateFilter;
+  const clearBtn = document.getElementById('clearAllFilters');
+  if (clearBtn) { clearBtn.style.display = hasFilter ? '' : 'none'; clearBtn.style.color = 'var(--text-muted)'; }
+}
+
+function toggleSidebarSection(key) {
+  state.sidebarSections[key] = !state.sidebarSections[key];
+  renderSidebar();
+}
+function toggleCourtRegion(r) {
+  state.sidebarCourtRegions[r] = !state.sidebarCourtRegions[r];
+  renderSidebar();
+}
+function toggleJudgeRegion(r) {
+  state.sidebarJudgeRegions[r] = !state.sidebarJudgeRegions[r];
+  renderSidebar();
+}
+function toggleJudgeCourt(key) {
+  state.sidebarJudgeCourts[key] = !state.sidebarJudgeCourts[key];
+  renderSidebar();
+}
+function filterByDate(m) {
+  state.dateFilter = state.dateFilter === m ? null : m;
+  render();
+}
+function filterByCourt(c) {
+  state.courtFilter = state.courtFilter === c ? null : c;
+  render();
+}
+function clearAllFilters() {
+  state.judgeFilter = null; state.courtFilter = null; state.dateFilter = null;
+  render();
+}
+function renderJudgePanel() { renderSidebar(); }
+
+function renderTabPanels() {
+  document.getElementById('tabPanels').innerHTML = CATEGORIES.map(c => renderPanel(c)).join('');
+}
+
+// Track collapsed groups: { catId: Set<subcat> }
+const collapsedGroups = {};
+
+function toggleGroup(catId, subcat) {
+  if (!collapsedGroups[catId]) collapsedGroups[catId] = new Set();
+  if (collapsedGroups[catId].has(subcat)) {
+    collapsedGroups[catId].delete(subcat);
+  } else {
+    collapsedGroups[catId].add(subcat);
+  }
+  reRenderPanel(catId);
+}
+
+function renderPanel(cat) {
+  const rows = getFilteredData(cat.id);
+  const sort = state.tableSorts[cat.id] || {};
+  const isSearching = !!(state.globalQuery || state.tableQueries[cat.id]);
+  const hl = (state.globalQuery || state.tableQueries[cat.id] || '').trim().toLowerCase();
+
+  const cols = [
+    {key:'date', label:'日期'},
+    {key:'plaintiff', label:'原告'},
+    {key:'caseNo', label:'案号'},
+    {key:'court', label:'法院'},
+    {key:'judge', label:'法官'},
+    {key:'result', label:'结果'},
+    {key:'claim', label:'原告索赔'},
+    {key:'keywords', label:'关键词'},
+  ];
+
+  // 笔记侵权Tab关键词列改为"免责说理要点"
+  const adjustedCols = cols.map(c => {
+    if (c.key === 'keywords' && cat.id === 'personality-rights') {
+      return { ...c, label: '关键词' };
+    }
+    return c;
+  });
+  const thHtml = adjustedCols.map(c => {
+    let cls = '';
+    if (sort.col === c.key) cls = sort.dir === 'asc' ? 'sorted-asc' : 'sorted-desc';
+    return `<th class="${cls}" onclick="sortTable('${cat.id}','${c.key}')">${escHtml(c.label)}<span class="sort-icon"></span></th>`;
+  }).join('');
+
+  // Build subcat groups preserving original data order
+  const subcatOrder = [];
+  const subcatMap = {};
+  // Use original DATA order to determine subcat ordering within category
+  DATA.filter(d => d.category === cat.id).forEach(d => {
+    if (!subcatMap[d.subcat]) {
+      subcatMap[d.subcat] = [];
+      subcatOrder.push(d.subcat);
+    }
+  });
+  // Distribute filtered rows into groups
+  rows.forEach(r => {
+    if (!subcatMap[r.subcat]) {
+      // subcat not in original order (shouldn't happen), add it
+      subcatMap[r.subcat] = [];
+      subcatOrder.push(r.subcat);
+    }
+    subcatMap[r.subcat].push(r);
+  });
+
+  const collapsed = collapsedGroups[cat.id] || new Set();
+
+  function renderRow(r) {
+    // 笔记侵权类：关键词列显示免责说理摘要；其他类别显示 keywords
+    let kwTags;
+    if (cat.id === 'personality-rights') {
+      // 第三人直接标注
+      if (r.xingyinRole === '第三人') {
+        kwTags = `<span class="kw-tag">${highlight('第三人', hl)}</span>`;
+      } else {
+        const s = r.summary || '';
+        const tags = [];
+        // 败诉案件优先识别担责原因
+        if (r.subcat === '行吟被判承担责任') {
+          if (/未及时|未.*删除|拒绝.*下架|未.*处置|未尽.*管理/.test(s)) tags.push('未及时处置');
+          else tags.push('被判担责');
+          kwTags = tags.map(k => `<span class="kw-tag">${highlight(k, hl)}</span>`).join('');
+        } else if (/私信|隐蔽/.test(s))                                              tags.push('私信隐蔽');
+        if (/仅提供.*存储|存储服务|无.*主动审查/.test(s))                      tags.push('存储免责');
+        if (/及时删除|及时下架|及时处置|及时处理|及时采取|收到.*删|收到.*下架|断开.*链接|已.*下架|屏蔽.*处理/.test(s)) tags.push('及时处置');
+        if (/收到.*律师函|律师函后/.test(s))                                   tags.push('律师函处置');
+        if (/未收到.*通知|未向.*发.*通知|无.*有效通知|未举证.*通知/.test(s))    tags.push('无有效通知');
+        if (/披露.*用户|披露.*信息|协助.*披露/.test(s))                        tags.push('披露信息');
+        if (/连带.*缺乏|连带.*无据|无需.*连带|不应.*连带|缺乏.*依据|缺乏事实/.test(s)) tags.push('连带无据');
+        if (/不构成.*知道|不能证明.*知道|无.*故意|无过错|不存在.*过错/.test(s)) tags.push('不知情免责');
+        if (/未实施.*侵权|无.*共同侵权|不构成.*侵权|无需.*担责|无需.*承担|不承担.*责任/.test(s)) tags.push('无侵权行为');
+        if (/合理管理|尽.*管理义务|履行.*义务|尽.*注意义务/.test(s))            tags.push('尽管理义务');
+        if (/撤回.*诉请|当庭撤回/.test(s))                                     tags.push('原告撤诉');
+        if (/诉讼时效|时效届满/.test(s))                                       tags.push('时效届满');
+        if (/怠于行使|怠于履行|不存在.*行使/.test(s))                      tags.push('无侵权行为');
+        if (/尽法定义务|已尽.*义务|履行法定/.test(s))                          tags.push('尽管理义务');
+        // 无说理/未涉及/败诉：显示语义化兜底标签
+        if (tags.length === 0) {
+          if (r.subcat === '行吟被判承担责任') {
+            if (/未及时|未.*删除|拒绝.*下架|未.*处置|未尽.*义务/.test(s)) tags.push('未及时处置');
+            else tags.push('被判担责');
+          }
+          else if (r.subcat === '行吟免责（无专门说理）') tags.push('未专门论及');
+          else tags.push(r.infType || '名誉权');
+        }
+        if (r.subcat !== '行吟被判承担责任') {
+          kwTags = tags.slice(0,2).map(k => `<span class="kw-tag">${highlight(k, hl)}</span>`).join('');
+        }
+      }
+    } else {
+      kwTags = r.keywords.split(',').map(k => `<span class="kw-tag">${highlight(k.trim(), hl)}</span>`).join('');
+    }
+    return `<tr onclick="openModal(${r.id})">
+      <td class="date">${highlight(r.date, hl)}</td>
+      <td class="plaintiff">${highlight(r.plaintiff, hl)}</td>
+      <td class="case-no">${highlight(r.caseNo, hl)}</td>
+      <td class="court" title="${escHtml(r.court)}">${highlight(shortCourt(r.court), hl)}</td>
+      <td class="judge">${highlight(r.judge, hl)}</td>
+      <td><span class="badge-result ${r.result}">${getResultLabel(r.result)}</span></td>
+      <td class="claim">${escHtml(r.claim)}</td>
+      <td class="keywords">${kwTags}</td>
+    </tr>`;
+  }
+
+  let tbodyHtml = '';
+  if (rows.length === 0) {
+    tbodyHtml = `<tr><td colspan="8"><div class="empty-state">
+      <svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <p>没有找到匹配的案件</p>
+    </div></td></tr>`;
+  } else {
+    // When searching, auto-expand all groups
+    subcatOrder.forEach(subcat => {
+      const groupRows = subcatMap[subcat];
+      if (!groupRows || groupRows.length === 0) return;
+      const isCollapsed = !isSearching && collapsed.has(subcat);
+      const escapedSubcat = subcat.replace(/'/g, "\\'");
+      tbodyHtml += `<tr class="group-header${isCollapsed ? ' collapsed' : ''}" onclick="toggleGroup('${cat.id}', '${escapedSubcat}')">
+        <td colspan="8">
+          <span class="group-arrow">▼</span>
+          ${escHtml(subcat)}<span class="group-count">${groupRows.length} 件</span>
+        </td>
+      </tr>`;
+      if (!isCollapsed) {
+        tbodyHtml += groupRows.map(renderRow).join('');
+      }
+    });
+  }
+
+  return `
+    <div class="tab-panel ${state.activeTab===cat.id?'active':''}" id="panel-${cat.id}">
+      <div class="table-toolbar">
+        <div class="table-search">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="text" placeholder="在此分类内搜索…" value="${escHtml(state.tableQueries[cat.id]||'')}" oninput="tableSearch('${cat.id}', this.value)" />
+        </div>
+        ${state.judgeFilter ? `<span style="background:var(--surface-alt);color:var(--text);border:1px solid var(--border);border-left:3px solid var(--primary);border-radius:5px;padding:3px 10px 3px 8px;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:6px;">法官：${escHtml(state.judgeFilter)}<button onclick="clearJudgeFilter()" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:13px;line-height:1;padding:0;">✕</button></span>` : ''}
+  ${state.courtFilter ? `<span style="background:var(--surface-alt);color:var(--text);border:1px solid var(--border);border-left:3px solid var(--primary);border-radius:5px;padding:3px 10px 3px 8px;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:6px;">法院：${escHtml(state.courtFilter)}<button onclick="filterByCourt(state.courtFilter)" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:13px;line-height:1;padding:0;">✕</button></span>` : ''}
+  ${state.dateFilter ? `<span style="background:var(--surface-alt);color:var(--text);border:1px solid var(--border);border-left:3px solid var(--primary);border-radius:5px;padding:3px 10px 3px 8px;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:6px;">时间：${escHtml(state.dateFilter)}<button onclick="filterByDate(state.dateFilter)" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:13px;line-height:1;padding:0;">✕</button></span>` : ''}
+        <div class="table-info">共 ${rows.length} 条</div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>${thHtml}</tr></thead>
+          <tbody>${tbodyHtml}</tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+function shortCourt(c) {
+  // Shorten for table display: keep district/city + court level
+  return c
+    .replace('人民法院', '法院')
+    .replace(/^上海市/, '')
+    .replace(/^北京市/, '')
+    .replace(/^广东省/, '')
+    .replace(/^云南省/, '')
+    .replace(/^重庆市/, '')
+    .replace(/^辽宁省/, '')
+    .replace(/^四川省/, '')
+    .replace(/^吉林省?/, '')
+    .replace(/^海南省/, '')
+    .replace(/^江苏省/, '')
+    .replace(/^山东省/, '')
+    .replace(/^河南省/, '');
+}
+
+// ============================================================
+// MODAL
+// ============================================================
+function openModal(id) {
+  const r = DATA.find(d => d.id === id);
+  if (!r) return;
+  document.getElementById('modalTitle').textContent = r.plaintiff + ' v. 行吟信息科技';
+  document.getElementById('modalSub').textContent = r.caseNo + ' · ' + r.court;
+
+  // Build fields based on category
+  const commonFields = [
+    {label:'日期', value: r.date},
+    {label:'原告', value: r.plaintiff},
+    {label:'案号', value: r.caseNo},
+    {label:'法院', value: r.court},
+    {label:'法官', value: r.judge},
+    {label:'案件类型', value: CATEGORIES.find(c=>c.id===r.category)?.label || ''},
+    {label:'子分类', value: r.subcat},
+    {label:'审理结果', value: `<span class="badge-result ${r.result}">${getResultLabel(r.result)}</span>`, isHtml: true},
+    {label:'原告索赔金额', value: r.claim},
+  ];
+
+  // Category-specific extra fields
+  let extraFields = [];
+  if (r.category === 'user-ban') {
+    extraFields = [
+      {label:'封号原因', value: r.reason || '—', fullWidth: true}
+    ];
+  } else if (r.category === 'merchant') {
+    extraFields = [
+      {label:'处置内容', value: r.disposal || '—', fullWidth: true},
+      {label:'处置原因', value: r.dispReason || '—', fullWidth: true},
+      {label:'原告主张', value: r.plaintiffClaim || '—', fullWidth: true}
+    ];
+  } else if (r.category === 'ecommerce') {
+    extraFields = [
+      {label:'购买商品', value: r.goods || '—', fullWidth: true},
+      {label:'争议焦点', value: r.disputeFocus || '—', fullWidth: true},
+      {label:'商家责任认定', value: r.merchantResult || '—', fullWidth: true}
+    ];
+  } else if (r.category === 'contract') {
+    extraFields = [
+      {label:'行吟身份', value: r.role || '—'},
+      {label:'案件概要', value: r.caseOverview || '—', fullWidth: true}
+    ];
+  } else if (r.category === 'personality-rights') {
+    extraFields = [
+      {label:'行吟身份', value: r.xingyinRole || '—'},
+      {label:'侵权类型', value: r.infType || '—'},
+      {label:'侵权内容摘要', value: r.infSummary || '—', fullWidth: true},
+      {label:'对平台索赔', value: r.claim || '—'}
+    ];
+  }
+
+  // PDF file field - link to monthly doc
+  const MONTH_LINKS = {
+    '10': 'https://docs.xiaohongshu.com/doc/e0c17c1193ea786c157a1b86967ccadc',
+    '11': 'https://docs.xiaohongshu.com/doc/692d724eb0ca33825e1ec4c6a5551516',
+    '12': 'https://docs.xiaohongshu.com/doc/65e0a7ad30a12951c6510acc90841155',
+    '01': 'https://docs.xiaohongshu.com/doc/bec5c32b37a1faa43f4bd43f6698d589',
+    '02': 'https://docs.xiaohongshu.com/doc/ae1de542ffeb18a8fa1815613cf4bee7',
+    '03': 'https://docs.xiaohongshu.com/doc/f14c0e27bf6d1a06afde197b5c8a1061',
+  };
+  const dateStr = r.date || '';
+  const monthKey = dateStr.length >= 7 ? dateStr.slice(5, 7) : '';
+  const docUrl = MONTH_LINKS[monthKey];
+  const yearKey = dateStr.length >= 4 ? dateStr.slice(0, 4) : '';
+  const monthLabel = monthKey ? yearKey + '年' + monthKey.replace(/^0/,'') + '月文书汇总文档' : '—';
+  const pdfField = docUrl
+    ? {label:'判决书文件', value: `<a href="${docUrl}" target="_blank" style="color:#1a6fad;text-decoration:underline;">${monthLabel}</a>`, isHtml: true, fullWidth: true}
+    : {label:'判决书文件', value: r.pdfFile || '—', fullWidth: true};
+
+  // Combine all fields
+  const allFields = [...commonFields, ...extraFields, pdfField];
+
+  document.getElementById('modalGrid').innerHTML = allFields.map(f =>
+    `<div class="modal-field ${f.fullWidth ? 'full-width' : ''}">
+      <div class="field-label">${escHtml(f.label)}</div>
+      <div class="field-value">${f.isHtml ? f.value : escHtml(f.value)}</div>
+    </div>`
+  ).join('');
+
+  document.getElementById('modalReasoning').textContent = r.summary;
+
+  // PDF button (removed - now shown as field)
+  const pdfBtn = document.getElementById('modalPdfBtn');
+  pdfBtn.style.display = 'none';
+
+  document.getElementById('modalOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function handleOverlayClick(e) {
+  if (e.target === document.getElementById('modalOverlay')) closeModal();
+}
+
+// ============================================================
+// ACTIONS
+// ============================================================
+function switchTab(id) {
+  state.activeTab = id;
+  renderNavTabs();
+  document.querySelectorAll('.tab-panel').forEach(el => el.classList.remove('active'));
+  const panel = document.getElementById('panel-' + id);
+  if (panel) panel.classList.add('active');
+  else renderTabPanels();
+}
+
+function sortTable(catId, col) {
+  const cur = state.tableSorts[catId];
+  if (cur && cur.col === col) {
+    state.tableSorts[catId] = { col, dir: cur.dir === 'asc' ? 'desc' : 'asc' };
+  } else {
+    state.tableSorts[catId] = { col, dir: 'asc' };
+  }
+  reRenderPanel(catId);
+}
+
+function tableSearch(catId, val) {
+  state.tableQueries[catId] = val;
+  reRenderPanel(catId);
+}
+
+function reRenderPanel(catId) {
+  const cat = CATEGORIES.find(c => c.id === catId);
+  if (!cat) return;
+  const el = document.getElementById('panel-' + catId);
+  if (el) {
+    const isActive = el.classList.contains('active');
+    el.outerHTML = renderPanel(cat);
+    const newEl = document.getElementById('panel-' + catId);
+    if (isActive && newEl) newEl.classList.add('active');
+  }
+}
+
+function render() {
+  renderSidebar();
+  CATEGORIES.forEach(c => reRenderPanel(c.id));
+}
+
+function filterByJudge(j) {
+  state.judgeFilter = state.judgeFilter === j ? null : j;
+  render();
+}
+
+function showJudgeProfile(name) {
+  const p = JUDGE_PROFILES[name];
+  if (!p) return;
+  document.getElementById('jpName').textContent = name;
+  document.getElementById('jpCourt').textContent = p.court || '';
+  document.getElementById('jpChamber').textContent = p.chamber || '—';
+  document.getElementById('jpContact').textContent = p.contact || '—';
+  document.getElementById('jpAssistant').textContent = p.assistant || '—';
+  document.getElementById('jpAssistantContact').textContent = p.assistantContact || '—';
+  document.getElementById('jpClerk').textContent = p.clerk || '—';
+  document.getElementById('jpClerkContact').textContent = p.clerkContact || '—';
+  document.getElementById('jpNotes').textContent = p.notes || '—';
+  document.getElementById('judgeProfileOverlay').classList.add('open');
+}
+
+function closeJudgeProfile(e) {
+  if (e && e.target !== document.getElementById('judgeProfileOverlay')) return;
+  document.getElementById('judgeProfileOverlay').classList.remove('open');
+}
+
+function clearJudgeFilter() {
+  state.judgeFilter = null;
+  render();
+}
+
+function toggleResultFilter(key) {
+  state.resultFilter = state.resultFilter === key ? null : key;
+  render();
+}
+
+function toggleJudgePanel() {}
+function toggleJudgeSidebar() {}
+
+function clearGlobalSearch() {
+  state.globalQuery = '';
+  document.getElementById('globalSearch').value = '';
+  document.getElementById('searchBanner').classList.remove('visible');
+  CATEGORIES.forEach(c => reRenderPanel(c.id));
+}
+
+// Global search
+document.getElementById('globalSearch').addEventListener('input', function() {
+  state.globalQuery = this.value.trim().toLowerCase();
+  const banner = document.getElementById('searchBanner');
+  if (state.globalQuery) {
+    const total = DATA.filter(d =>
+      d.plaintiff.toLowerCase().includes(state.globalQuery) ||
+      d.caseNo.toLowerCase().includes(state.globalQuery) ||
+      d.judge.toLowerCase().includes(state.globalQuery) ||
+      d.keywords.toLowerCase().includes(state.globalQuery) ||
+      d.summary.toLowerCase().includes(state.globalQuery)
+    ).length;
+    document.getElementById('searchBannerText').textContent = `全局搜索「${this.value.trim()}」，共找到 ${total} 条案件（跨所有分类）`;
+    banner.classList.add('visible');
+  } else {
+    banner.classList.remove('visible');
+  }
+  CATEGORIES.forEach(c => reRenderPanel(c.id));
+});
+
+// Keyboard close modal
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    closeModal();
+    document.getElementById('judgeProfileOverlay').classList.remove('open');
+  }
+});
+
+// ============================================================
+// INIT
+// ============================================================
+function init() {
+  renderStats();
+  renderNavTabs();
+  renderSidebar();
+  renderTabPanels();
+}
+
+init();
+</script>
+<div style="text-align:center;padding:20px 24px;color:var(--text-light);font-size:12px;margin-top:8px;border-top:1px solid var(--border);">
+  VerdictPulse · 结案文书管理系统 · 数据截至 2026.03
+</div>
+</body>
+</html>
